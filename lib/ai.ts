@@ -243,27 +243,57 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
   };
 }
 
+function normalizeAdCopy(c: Record<string, unknown>): AdCopy | null {
+  if (typeof c.headline !== "string" || c.headline.trim().length === 0) return null;
+  return {
+    variant: c.variant === "B" ? "B" : "A",
+    angle: typeof c.angle === "string" ? c.angle : "Hook",
+    headline: c.headline.trim(),
+    subheadline: typeof c.subheadline === "string" ? c.subheadline.trim() : "",
+    body: typeof c.body === "string" ? c.body.trim() : "",
+    cta: typeof c.cta === "string" ? c.cta.trim() : "",
+  };
+}
+
 function parseAdCopies(raw: string): AdCopy[] {
   const cleaned = raw.replace(/```json|```/g, "").trim();
   const arrStart = cleaned.indexOf("[");
   const arrEnd = cleaned.lastIndexOf("]");
-  if (arrStart === -1 || arrEnd === -1) return [];
-  try {
-    const arr = JSON.parse(cleaned.slice(arrStart, arrEnd + 1));
-    if (!Array.isArray(arr)) return [];
-    return arr
-      .filter((c) => typeof c.headline === "string" && c.headline.trim().length > 0)
-      .map((c) => ({
-        variant: c.variant === "B" ? "B" : "A",
-        angle: typeof c.angle === "string" ? c.angle : "Hook",
-        headline: c.headline.trim(),
-        subheadline: typeof c.subheadline === "string" ? c.subheadline.trim() : "",
-        body: typeof c.body === "string" ? c.body.trim() : "",
-        cta: typeof c.cta === "string" ? c.cta.trim() : "",
-      }));
-  } catch {
-    return [];
+  if (arrStart !== -1 && arrEnd > arrStart) {
+    try {
+      const arr = JSON.parse(cleaned.slice(arrStart, arrEnd + 1));
+      if (Array.isArray(arr)) {
+        const parsed = arr.map(normalizeAdCopy).filter((c): c is AdCopy => c !== null);
+        if (parsed.length > 0) return parsed;
+      }
+    } catch {
+      /* fall through to object extraction */
+    }
   }
+  // Robust fallback: scan for a `"headline"` key and capture the enclosing balanced object.
+  const out: AdCopy[] = [];
+  let i = 0;
+  while (i < cleaned.length && out.length < 10) {
+    const idx = cleaned.indexOf('"headline"', i);
+    if (idx === -1) break;
+    const objStart = cleaned.lastIndexOf("{", idx);
+    if (objStart === -1) { i = idx + 10; continue; }
+    let depth = 0;
+    let objEnd = -1;
+    for (let k = objStart; k < cleaned.length; k++) {
+      if (cleaned[k] === "{") depth++;
+      else if (cleaned[k] === "}") { depth--; if (depth === 0) { objEnd = k; break; } }
+    }
+    if (objEnd === -1) { i = idx + 10; continue; }
+    try {
+      const obj = normalizeAdCopy(JSON.parse(cleaned.slice(objStart, objEnd + 1)) as Record<string, unknown>);
+      if (obj) out.push(obj);
+    } catch {
+      /* skip malformed object */
+    }
+    i = objEnd + 1;
+  }
+  return out;
 }
 
 export async function generateAiAdCopy(
