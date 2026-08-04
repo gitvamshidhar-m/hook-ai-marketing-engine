@@ -3,6 +3,11 @@ import HookTool from "@/components/HookTool";
 
 const FEATURES = [
   {
+    title: "AI-Generated Hooks",
+    desc: "Groq, NVIDIA, and Gemini back the engine — live AI headlines with psychology scores, not canned templates.",
+    icon: "🤖",
+  },
+  {
     title: "10 Psychological Angles",
     desc: "Curiosity, loss aversion, social proof, contrarian, data-backed — the engine maps your topic to the triggers that actually get opened.",
     icon: "🧠",
@@ -18,14 +23,19 @@ const FEATURES = [
     icon: "🧭",
   },
   {
-    title: "Angle Coverage Meter",
-    desc: "Live heatmap of the 10 psychological angles — see where your campaign is concentrated and where you're free to play.",
-    icon: "📊",
+    title: "Performance Marketing Plan",
+    desc: "Budget projection, funnel map, platform policy checks, and a testing plan — turn one run into a full campaign.",
+    icon: "📈",
   },
   {
     title: "Channel-Native Hooks",
     desc: "Ad headlines, email subject lines, YouTube titles, and blog H1s — formatted for where they'll actually run.",
     icon: "📣",
+  },
+  {
+    title: "Saved Campaigns + Templates",
+    desc: "One-click starter templates and a campaign vault that syncs to your account — pick up where you left off.",
+    icon: "🗂️",
   },
   {
     title: "A/B Test Tracker",
@@ -38,16 +48,26 @@ const FEATURES = [
     icon: "💎",
   },
   {
-    title: "Shareable Results",
-    desc: "One click compresses your whole campaign into a shareable link — send it to a client or teammate.",
+    title: "Ad Copy Builder",
+    desc: "One click turns your top hooks into a complete paste-ready ad with headline, body, and CTA.",
+    icon: "📝",
+  },
+  {
+    title: "Share-to-Earn Referrals",
+    desc: "Share your results and earn bonus runs every day — every friend who joins gives you more free runs.",
     icon: "🔗",
+  },
+  {
+    title: "Seasonality + Demand Signals",
+    desc: "The engine watches search demand and seasonal timing so your hooks land when your audience is looking.",
+    icon: "🌤️",
   },
 ];
 
 const STEPS = [
-  { n: "01", t: "Describe your topic", d: "One sentence — that's all it needs." },
-  { n: "02", t: "Paste competitor hooks", d: "Optional, but powers the gap scan." },
-  { n: "03", t: "Get scored hooks", d: "Angles, headlines, scores, and a USP in seconds." },
+  { n: "01", t: "Pick a template or describe your topic", d: "One sentence — or start from a ready-made niche template." },
+  { n: "02", t: "Paste competitor hooks", d: "Optional, but powers the gap scan and blue-ocean angles." },
+  { n: "03", t: "Get scored hooks + a campaign plan", d: "Angles, headlines, scores, ad copy, and a growth plan in seconds." },
 ];
 
 export default function Home() {
@@ -70,7 +90,7 @@ export default function Home() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
             Hook AI is the angle-discovery engine for digital marketers. It finds the psychological triggers your
-            competitors are ignoring, scores every hook, and hands you a positioning statement — all in one shot.
+            competitors are ignoring, scores every hook, drafts your ad copy, and plans your campaign — all in one shot.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -133,7 +153,6 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-zinc-200 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800">
         Hook AI — built with Next.js, hosted free, powered by free AI tiers.
-      </footer>
-    </main>
+      </footer>    </main>
   );
 }
