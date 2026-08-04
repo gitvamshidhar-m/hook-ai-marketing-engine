@@ -38,6 +38,14 @@ export async function POST(req: NextRequest) {
     language: typeof body.language === "string" && body.language ? body.language : undefined,
   };
 
-  const result = hasAi() ? await generateAiResult(input) : generateResult(input);
-  return NextResponse.json(result);
+  if (!hasAi()) {
+    return NextResponse.json(generateResult(input));
+  }
+  try {
+    const result = await generateAiResult(input);
+    return NextResponse.json(result);
+  } catch (e) {
+    console.error("[analyze] generateAiResult failed:", e);
+    return NextResponse.json(generateResult(input));
+  }
 }

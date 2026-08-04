@@ -155,7 +155,7 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
       rawByChannel.set(ch, raw);
     }
   } catch (e) {
-    console.error("AI call failed, falling back to engine", e);
+    console.error("AI call failed, falling back to engine. Raw error:", e, "| model used:", model);
     return base;
   }
 
