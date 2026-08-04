@@ -156,7 +156,7 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
     }
   } catch (e) {
     console.error("AI call failed, falling back to engine. Raw error:", e, "| model used:", model);
-    return base;
+    return input.debug ? { ...base, aiDebug: String(e) } : base;
   }
 
   const merged: Hook[] = [];

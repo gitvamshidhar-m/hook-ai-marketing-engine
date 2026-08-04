@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
       ? body.voiceSamples.map((s: string) => s.trim()).filter(Boolean).slice(0, 4)
       : undefined,
     language: typeof body.language === "string" && body.language ? body.language : undefined,
+    debug: Boolean(body.debug),
   };
 
   if (!hasAi()) {

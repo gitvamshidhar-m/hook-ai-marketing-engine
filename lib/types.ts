@@ -68,6 +68,7 @@ export type AnalyzeResult = {
   taglines?: Tagline[];
   language?: string;
   keywords?: KeywordRow[];
+  aiDebug?: string;
 };
 
 export type KeywordRow = {
@@ -87,6 +88,7 @@ export type AnalyzeInput = {
   avoidPsych?: string[];
   voiceSamples?: string[];
   language?: string;
+  debug?: boolean;
 };
 
 export const LANGUAGES = [
