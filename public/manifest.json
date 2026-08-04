@@ -1,0 +1,16 @@
+{
+  "name": "Hook AI",
+  "short_name": "HookAI",
+  "description": "The angle discovery engine for digital marketers. Free, AI-powered, no signup.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

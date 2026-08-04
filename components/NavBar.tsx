@@ -14,6 +14,9 @@ export default function NavBar() {
           Hook <span className="text-indigo-500">AI</span>
         </Link>
         <span className="ml-auto flex items-center gap-3 text-sm">
+          <Link href="/analytics" className="text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">
+            Analytics
+          </Link>
           <Link href="/campaigns" className="text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">
             My campaigns
           </Link>

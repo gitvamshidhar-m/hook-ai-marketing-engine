@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Campaign } from "@/lib/account";
 import { listCampaigns, deleteCampaign, loadCampaign } from "@/lib/account";
 import ResultView from "@/components/ResultView";
+import { exportCampaignsCSV, exportResultCSV, printResult } from "@/lib/export";
 import type { AnalyzeResult } from "@/lib/types";
 
 export default function CampaignsPage() {
@@ -41,12 +42,33 @@ export default function CampaignsPage() {
               {camps.length} saved · stored in this browser (syncs to your Supabase account when configured)
             </p>
           </div>
-          <Link
-            href="/#tool"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
-          >
-            New analysis
-          </Link>
+          <div className="flex items-center gap-2">
+            {camps.length > 0 && (
+              <>
+                <button
+                  onClick={() => exportCampaignsCSV(camps)}
+                  className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                >
+                  Export CSV
+                </button>
+                <button
+                  onClick={() => {
+                    const best = camps[0];
+                    if (best) printResult(best.result);
+                  }}
+                  className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                >
+                  Print best
+                </button>
+              </>
+            )}
+            <Link
+              href="/#tool"
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+            >
+              New analysis
+            </Link>
+          </div>
         </div>
 
         {notice && <p className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">{notice}</p>}
@@ -90,6 +112,18 @@ export default function CampaignsPage() {
                     className="mt-3 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
                   >
                     {openId === c.id ? "Hide details" : "Open"}
+                  </button>
+                  <button
+                    onClick={() => exportResultCSV(c.result)}
+                    className="mt-3 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  >
+                    CSV
+                  </button>
+                  <button
+                    onClick={() => printResult(c.result)}
+                    className="mt-3 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  >
+                    Print
                   </button>
                 </div>
               );
