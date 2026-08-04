@@ -10,7 +10,7 @@ import { recordRun, supabaseConfigured } from "@/lib/supabase";
 import { bonusRunsToday } from "@/lib/referral";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
-const FREE_DAILY = 5;
+const FREE_DAILY = 20;
 const RUN_KEY = "hookai-runlog";
 const PROGRESS_STEPS = [
   "Mapping psychological angles…",
