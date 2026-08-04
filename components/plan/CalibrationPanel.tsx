@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import type { AnalyzeResult } from "@/lib/types";
+import { classifyHook } from "@/lib/psych";
 
-type Entry = { text: string; predicted: number; actualCtr: number };
+type Entry = { text: string; predicted: number; actualCtr: number; angle: string; channel: string };
 
 const KEY = "hookai-calibration";
 
@@ -39,7 +40,10 @@ export default function CalibrationPanel({ result }: { result: AnalyzeResult }) 
     const hook = top.find((h) => h.text === pick);
     const val = parseFloat(ctr);
     if (!hook || isNaN(val)) return;
-    setEntries((prev) => [...prev.filter((e) => e.text !== pick), { text: pick, predicted: hook.score, actualCtr: val }]);
+    setEntries((prev) => [
+      ...prev.filter((e) => e.text !== pick),
+      { text: pick, predicted: hook.score, actualCtr: val, angle: classifyHook(hook.text), channel: hook.channel },
+    ]);
     setPick("");
     setCtr("");
   }
@@ -47,7 +51,20 @@ export default function CalibrationPanel({ result }: { result: AnalyzeResult }) 
   const usable = entries.length >= 3;
   const avgPred = usable ? entries.reduce((s, e) => s + e.predicted, 0) / entries.length : 0;
   const avgAct = usable ? entries.reduce((s, e) => s + e.actualCtr, 0) / entries.length : 0;
-  const bias = usable ? (avgAct - avgPred / 8) : 0; // scores ≈ 8× CTR% by our model
+  const bias = usable ? avgAct - avgPred / 8 : 0;
+
+  // per-angle learning: which angle type over/under-performs for THIS user
+  const byAngle = new Map<string, { n: number; ctr: number }>();
+  entries.forEach((e) => {
+    const cur = byAngle.get(e.angle) || { n: 0, ctr: 0 };
+    cur.n += 1;
+    cur.ctr += e.actualCtr;
+    byAngle.set(e.angle, cur);
+  });
+  const learned = [...byAngle.entries()]
+    .map(([angle, v]) => ({ angle, ctr: v.ctr / v.n, n: v.n }))
+    .sort((a, b) => b.ctr - a.ctr)
+    .slice(0, 3);
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
@@ -100,6 +117,29 @@ export default function CalibrationPanel({ result }: { result: AnalyzeResult }) 
                 ? `Scores are UNDERpredicting by ~${bias.toFixed(1)} pts of CTR — treat 90+ as very strong.`
                 : `Scores are OVERpredicting by ~${Math.abs(bias).toFixed(1)} pts of CTR — treat 90+ as strong, not guaranteed.`}
           </p>
+          {learned.length > 0 && (
+            <div className="mt-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                What wins for you (by angle)
+              </p>
+              <ul className="mt-1.5 space-y-1">
+                {learned.map((l) => (
+                  <li key={l.angle} className="flex items-center justify-between text-xs">
+                    <span className="capitalize">{l.angle}</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">{l.ctr.toFixed(2)}% CTR</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-zinc-500">
+                Estimated scores for this run&apos;s hooks, adjusted by your bias:{" "}
+                {[...result.hooks]
+                  .sort((a, b) => b.score - a.score)
+                  .slice(0, 3)
+                  .map((h) => `${Math.max(0, Math.min(100, Math.round(h.score / 8 + bias * 8)))}`).join(" · ")}{" "}
+                /100 (scaled)
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <p className="mt-4 text-xs text-zinc-400">Log at least 3 real results to see calibration bias.</p>

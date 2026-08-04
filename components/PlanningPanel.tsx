@@ -11,6 +11,7 @@ import CalibrationPanel from "./plan/CalibrationPanel";
 import SovPanel from "./plan/SovPanel";
 import PolicyPanel from "./plan/PolicyPanel";
 import ExportPanel from "./plan/ExportPanel";
+import DemandPanel from "./plan/DemandPanel";
 
 export default function PlanningPanel({ result }: { result: AnalyzeResult }) {
   return (
@@ -22,7 +23,10 @@ export default function PlanningPanel({ result }: { result: AnalyzeResult }) {
       </div>
       <PreviewPanel result={result} />
       <MessageMatchPanel result={result} />
-      <TargetingPanel result={result} />
+      <div className="grid gap-5 lg:grid-cols-2">
+        <TargetingPanel result={result} />
+        <DemandPanel result={result} />
+      </div>
       <div className="grid gap-5 lg:grid-cols-2">
         <SovPanel result={result} />
         <PolicyPanel result={result} />

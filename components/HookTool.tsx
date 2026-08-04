@@ -5,7 +5,9 @@ import type { AnalyzeResult, Channel } from "@/lib/types";
 import { CHANNEL_LABELS, LANGUAGES } from "@/lib/types";
 import ResultView from "./ResultView";
 import Dashboard from "./Dashboard";
+import TemplateGallery from "./TemplateGallery";
 import { recordRun, supabaseConfigured } from "@/lib/supabase";
+import { bonusRunsToday } from "@/lib/referral";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
 const FREE_DAILY = 5;
@@ -84,8 +86,8 @@ export default function HookTool() {
 
   async function run(variationSeed: number, avoid: string[]) {
     if (!topic.trim()) return setError("Enter a topic to start.");
-    if (variationSeed === 0 && usedToday() >= FREE_DAILY) {
-      setError(`You hit the free limit (${FREE_DAILY} runs/day). Try harder variations still work, or come back tomorrow.`);
+    if (variationSeed === 0 && usedToday() >= FREE_DAILY + bonusRunsToday()) {
+      setError(`You hit the free limit (${FREE_DAILY} runs/day). Share results to earn bonus runs, try harder variations, or come back tomorrow.`);
       return;
     }
     setLoading(true);
@@ -142,14 +144,17 @@ export default function HookTool() {
   }
 
   const remaining =
-    rerunsLeft !== null ? rerunsLeft : Math.max(0, FREE_DAILY - usedToday());
+    rerunsLeft !== null ? rerunsLeft : Math.max(0, FREE_DAILY + bonusRunsToday() - usedToday());
+  const bonusToday = bonusRunsToday();
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
+      <TemplateGallery onLoad={(v) => { setTopic(v.topic); setAudience(v.audience); setGoal(v.goal); setCompetitors(v.competitors); setVoiceSamples(v.voice); setLanguage(v.language); }} />
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-4 flex items-center justify-between gap-2">
           <span className="text-xs text-zinc-500">
-            Free plan · {remaining}/{FREE_DAILY} runs today{supabaseConfigured ? "" : " (trying harder is unlimited)"}
+            Free plan · {remaining}/{FREE_DAILY} runs today{bonusToday > 0 ? ` (+${bonusToday} from sharing)` : ""}
+            {supabaseConfigured ? "" : " (trying harder is unlimited)"}
           </span>
           <button
             onClick={reset}

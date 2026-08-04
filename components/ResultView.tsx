@@ -12,6 +12,8 @@ import PlanningPanel from "./PlanningPanel";
 import CampaignBrief from "./CampaignBrief";
 import KeywordHeatmap from "./KeywordHeatmap";
 import { buildShareUrl } from "@/lib/analytics";
+import { buildShareUrl as buildRefShareUrl, earnBonusOnShare } from "@/lib/referral";
+import { saveCampaign } from "@/lib/account";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
 const TABS = ["Hooks", "Angles", "Gap Scan", "USP", "Ad Copy", "Plan", "Intelligence"] as const;
@@ -30,7 +32,8 @@ export default function ResultView({
 }) {
   const [tab, setTab] = useState<Tab>("Hooks");
   const [copied, setCopied] = useState("");
-  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+  const [shareState, setShareState] = useState<"idle" | "copied" | "bonus">("idle");
+  const [savedState, setSavedState] = useState<"idle" | "done">("idle");
   const [showScoreTip, setShowScoreTip] = useState(false);
 
   async function copy(text: string, id: string) {
@@ -45,13 +48,21 @@ export default function ResultView({
 
   async function share() {
     const url = await buildShareUrl(result);
+    const refUrl = buildRefShareUrl(url);
+    const earned = earnBonusOnShare();
     try {
-      await navigator.clipboard.writeText(url);
-      setShareState("copied");
-      setTimeout(() => setShareState("idle"), 2000);
+      await navigator.clipboard.writeText(refUrl);
+      setShareState(earned ? "bonus" : "copied");
+      setTimeout(() => setShareState("idle"), 2500);
     } catch {
       /* clipboard unavailable */
     }
+  }
+
+  function save() {
+    saveCampaign(result);
+    setSavedState("done");
+    setTimeout(() => setSavedState("idle"), 2000);
   }
 
   const best = [...result.hooks].sort((a, b) => b.score - a.score)[0];
@@ -84,10 +95,16 @@ export default function ResultView({
         )}
         <span className="ml-auto flex items-center gap-2">
           <button
+            onClick={save}
+            className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            {savedState === "done" ? "Saved!" : "Save campaign"}
+          </button>
+          <button
             onClick={share}
             className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
-            {shareState === "copied" ? "Link copied!" : "Share results"}
+            {shareState === "copied" ? "Link copied!" : shareState === "bonus" ? "+1 free run earned!" : "Share results"}
           </button>
           {onTryHarder && (
             <button

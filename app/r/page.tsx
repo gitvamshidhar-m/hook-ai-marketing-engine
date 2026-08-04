@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { AnalyzeResult } from "@/lib/types";
 import { decodeShareData } from "@/lib/analytics";
+import { detectReferral } from "@/lib/referral";
 import ResultView from "@/components/ResultView";
 import Link from "next/link";
 
@@ -20,6 +21,10 @@ function SharedResults() {
   const d = params.get("d");
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [failed, setFailed] = useState(false);
+  const [ref] = useState<{ code: string; first: boolean } | null>(() => {
+    const r = detectReferral();
+    return r.refCode ? { code: r.refCode, first: r.firstTime } : null;
+  });
 
   useEffect(() => {
     if (!d) return;
@@ -59,6 +64,16 @@ function SharedResults() {
             Make your own
           </Link>
         </div>
+
+        {ref && (
+          <div className="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-950 dark:bg-indigo-950/40">
+            <p className="text-sm text-indigo-700 dark:text-indigo-300">
+              {ref.first
+                ? `You were referred to Hook AI${ref.code !== "anon" ? ` by someone (${ref.code})` : ""}. Share your own results to earn free runs.`
+                : `Shared by a Hook AI user${ref.code !== "anon" ? ` (${ref.code})` : ""}.`}
+            </p>
+          </div>
+        )}
 
         {!d && (
           <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
