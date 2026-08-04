@@ -16,6 +16,12 @@ function cap(s: string, n: number) {
   return s.trim().split(/\s+/).slice(0, n).join(" ");
 }
 
+function norm(v: string[] | string | undefined): string[] {
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string") return v.split("\n");
+  return [];
+}
+
 /* ---------------- angle templates ---------------- */
 
 function buildAngles(topic: string): Angle[] {
@@ -239,15 +245,15 @@ export function generateResult(input: AnalyzeInput): AnalyzeResult {
     topic: input.topic,
     audience: input.audience || "marketers",
     goal: input.goal || "",
-    competitorHooks: input.competitorHooks || [],
+    competitorHooks: norm(input.competitorHooks),
     angles,
     hooks,
-    gaps: buildGaps(input.topic, input.competitorHooks || []),
+    gaps: buildGaps(input.topic, norm(input.competitorHooks)),
     usp,
     aiPowered: false,
     language: input.language || "en",
-    voice: input.voiceSamples && input.voiceSamples.length ? detectVoice(input.voiceSamples) : undefined,
+    voice: norm(input.voiceSamples).length ? detectVoice(norm(input.voiceSamples)) : undefined,
     taglines: catchphrases(input.topic, input.audience || ""),
-    keywords: keywordMatrix(input.competitorHooks || [], hooks),
+    keywords: keywordMatrix(norm(input.competitorHooks), hooks),
   };
 }

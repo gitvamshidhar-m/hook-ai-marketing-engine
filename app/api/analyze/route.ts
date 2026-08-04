@@ -21,7 +21,12 @@ export async function POST(req: NextRequest) {
   if (topic.length > 120) {
     return NextResponse.json({ error: "Topic is too long (max 120 chars)." }, { status: 400 });
   }
-  const competitors = (body.competitorHooks || []).map((c) => c.trim()).filter(Boolean).slice(0, 6);
+  const rawCompetitors = Array.isArray(body.competitorHooks)
+    ? body.competitorHooks
+    : typeof body.competitorHooks === "string"
+      ? body.competitorHooks.split("\n")
+      : [];
+  const competitors = rawCompetitors.map((c: string) => c.trim()).filter(Boolean).slice(0, 6);
 
   const input: AnalyzeInput = {
     topic,
@@ -34,7 +39,9 @@ export async function POST(req: NextRequest) {
     avoidPsych: Array.isArray(body.avoidPsych) ? body.avoidPsych.slice(0, 6) : undefined,
     voiceSamples: Array.isArray(body.voiceSamples)
       ? body.voiceSamples.map((s: string) => s.trim()).filter(Boolean).slice(0, 4)
-      : undefined,
+      : typeof body.voiceSamples === "string"
+        ? body.voiceSamples.split("\n").map((s: string) => s.trim()).filter(Boolean).slice(0, 4)
+        : undefined,
     language: typeof body.language === "string" && body.language ? body.language : undefined,
     debug: Boolean(body.debug),
   };

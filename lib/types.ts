@@ -81,12 +81,12 @@ export type AnalyzeInput = {
   topic: string;
   audience?: string;
   goal?: string;
-  competitorHooks?: string[];
+  competitorHooks?: string[] | string;
   channel?: Channel | "all";
   count?: number;
   variation?: number;
   avoidPsych?: string[];
-  voiceSamples?: string[];
+  voiceSamples?: string[] | string;
   language?: string;
   debug?: boolean;
 };

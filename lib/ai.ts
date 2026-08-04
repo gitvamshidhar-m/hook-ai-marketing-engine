@@ -29,14 +29,24 @@ function buildPrompt(input: AnalyzeInput, channel: Channel): string {
   const avoid = avoidPsych.length
     ? `\n- AVOID these already-used psychology triggers (try different ones): ${avoidPsych.join(", ")}`
     : "";
+  const voiceSampleList = Array.isArray(input.voiceSamples)
+    ? input.voiceSamples
+    : typeof input.voiceSamples === "string"
+      ? input.voiceSamples.split("\n")
+      : [];
   const voiceNote =
-    input.voiceSamples && input.voiceSamples.length
-      ? `\nMatch this brand voice exactly. Examples of their tone: ${input.voiceSamples.slice(0, 3).join(" | ")}`
+    voiceSampleList.length
+      ? `\nMatch this brand voice exactly. Examples of their tone: ${voiceSampleList.slice(0, 3).join(" | ")}`
       : "";
   const languageNote = input.language && input.language !== "en" ? `\nWrite the hooks in ${input.language}.` : "";
+  const compList = Array.isArray(input.competitorHooks)
+    ? input.competitorHooks
+    : typeof input.competitorHooks === "string"
+      ? input.competitorHooks.split("\n")
+      : [];
   const competitorNote =
-    input.competitorHooks && input.competitorHooks.length
-      ? `\nCompetitors already use: ${input.competitorHooks.slice(0, 4).join(" | ")}\n- Steer AWAY from matching them unless you can be sharper.`
+    compList.length
+      ? `\nCompetitors already use: ${compList.slice(0, 4).join(" | ")}\n- Steer AWAY from matching them unless you can be sharper.`
       : "";
   const variationNote =
     variation > 0
@@ -154,6 +164,16 @@ function humanize(t: string) {
 
 export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResult> {
   const base = generateResult(input);
+  const compList = Array.isArray(input.competitorHooks)
+    ? input.competitorHooks
+    : typeof input.competitorHooks === "string"
+      ? input.competitorHooks.split("\n")
+      : [];
+  const voiceList = Array.isArray(input.voiceSamples)
+    ? input.voiceSamples
+    : typeof input.voiceSamples === "string"
+      ? input.voiceSamples.split("\n")
+      : [];
   const channels: Channel[] =
     input.channel && input.channel !== "all" ? [input.channel] : ["ad", "email", "youtube", "blog"];
   const variation = input.variation && input.variation > 0 ? input.variation : 0;
@@ -179,11 +199,12 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
     }
   }
 
+  const normInput = { ...input, competitorHooks: compList, voiceSamples: voiceList };
   const ran =
-    (GROQ_KEY && (await runWith((ch) => callGroq(buildPrompt({ ...input, count: input.count || 3 }, ch)), `Groq ${GROQ_MODEL}`))) ||
+    (GROQ_KEY && (await runWith((ch) => callGroq(buildPrompt({ ...normInput, count: input.count || 3 }, ch)), `Groq ${GROQ_MODEL}`))) ||
     (NVIDIA_KEY &&
-      (await runWith((ch) => callNvidia(buildPrompt({ ...input, count: input.count || 3 }, ch)), `NVIDIA ${NVIDIA_MODEL}`))) ||
-    (GEMINI_KEY && (await runWith((ch) => callGemini(buildPrompt({ ...input, count: input.count || 3 }, ch)), `Gemini ${GEMINI_MODEL}`)));
+      (await runWith((ch) => callNvidia(buildPrompt({ ...normInput, count: input.count || 3 }, ch)), `NVIDIA ${NVIDIA_MODEL}`))) ||
+    (GEMINI_KEY && (await runWith((ch) => callGemini(buildPrompt({ ...normInput, count: input.count || 3 }, ch)), `Gemini ${GEMINI_MODEL}`)));
 
   if (!ran) {
     console.error("All AI providers failed, falling back to engine. Raw error:", lastError);
@@ -216,9 +237,9 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
     model,
     language: input.language || "en",
     voice:
-      input.voiceSamples && input.voiceSamples.length ? detectVoice(input.voiceSamples) : base.voice,
+      voiceList.length ? detectVoice(voiceList) : base.voice,
     taglines: catchphrases(input.topic, input.audience || ""),
-    keywords: keywordMatrix(input.competitorHooks || [], merged),
+    keywords: keywordMatrix(compList, merged),
   };
 }
 
