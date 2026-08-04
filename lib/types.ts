@@ -1,5 +1,7 @@
 export type Channel = "ad" | "email" | "youtube" | "blog";
 
+export type ImproveMode = "stronger" | "shorter" | "curious" | "urgent";
+
 export type Angle = {
   name: string;
   category: string;

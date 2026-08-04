@@ -11,12 +11,13 @@ import VoicePanel from "./VoicePanel";
 import PlanningPanel from "./PlanningPanel";
 import CampaignBrief from "./CampaignBrief";
 import KeywordHeatmap from "./KeywordHeatmap";
+import AiToolsPanel from "./AiToolsPanel";
 import { buildShareUrl } from "@/lib/analytics";
 import { buildShareUrl as buildRefShareUrl, earnBonusOnShare } from "@/lib/referral";
 import { saveCampaign } from "@/lib/account";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
-const TABS = ["Hooks", "Angles", "Gap Scan", "USP", "Ad Copy", "Plan", "Intelligence"] as const;
+const TABS = ["Hooks", "Angles", "Gap Scan", "USP", "Ad Copy", "Plan", "AI Tools", "Intelligence"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function ResultView({
@@ -331,6 +332,12 @@ export default function ResultView({
       {tab === "Plan" && (
         <div role="tabpanel" id="panel-Plan" aria-labelledby="tab-Plan">
           <PlanningPanel result={result} />
+        </div>
+      )}
+
+      {tab === "AI Tools" && (
+        <div className="mt-5" role="tabpanel" id="panel-AI Tools" aria-labelledby="tab-AI Tools">
+          <AiToolsPanel result={result} />
         </div>
       )}
 
