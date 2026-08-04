@@ -40,12 +40,14 @@ function computeNext(prev: Stats, result: AnalyzeResult): Stats {
   let streak = 1;
   if (prev.lastDay === today) streak = prev.streak;
   else if (prev.lastDay === yesterday) streak = prev.streak + 1;
+  const topic = result.topic.trim();
+  const recent = [topic, ...prev.recent.filter((t) => t.trim().toLowerCase() !== topic.toLowerCase())].slice(0, 5);
   return {
     runs: prev.runs + 1,
     hooks: prev.hooks + result.hooks.length,
     best: top && top.score > prev.best ? top.score : prev.best,
     lastBestText: top && top.score > prev.best ? top.text : prev.lastBestText,
-    recent: [result.topic, ...prev.recent].slice(0, 5),
+    recent,
     streak,
     lastDay: today,
   };
