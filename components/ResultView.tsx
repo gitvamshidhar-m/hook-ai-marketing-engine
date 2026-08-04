@@ -5,6 +5,10 @@ import type { AnalyzeResult, Channel } from "@/lib/types";
 import { CHANNEL_LABELS, ANGLE_CATEGORIES } from "@/lib/types";
 import IntelligencePanel from "./IntelligencePanel";
 import AbTestTracker from "./AbTestTracker";
+import AbSimulator from "./AbSimulator";
+import VoicePanel from "./VoicePanel";
+import CampaignBrief from "./CampaignBrief";
+import KeywordHeatmap from "./KeywordHeatmap";
 import { buildShareUrl } from "@/lib/analytics";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
@@ -139,7 +143,36 @@ export default function ResultView({
                           </button>
                         </div>
                       </div>
-                      <p className="mt-2 text-xs text-zinc-500">{h.psychology}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                        <span>{h.psychology}</span>
+                        {h.forecast && (
+                          <span className="rounded bg-violet-50 px-1.5 py-0.5 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                            {h.forecast.emotion}
+                          </span>
+                        )}
+                        {h.compliance && (
+                          <span
+                            className={`rounded px-1.5 py-0.5 ${
+                              h.compliance.ok
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                                : "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                            }`}
+                            title={h.compliance.ok ? "Channel-compliant" : h.compliance.flags.join("\n")}
+                          >
+                            {h.compliance.ok ? "✓ compliant" : "⚠ flags"}
+                          </span>
+                        )}
+                      </div>
+                      {h.forecast && (
+                        <p className="mt-1.5 text-xs text-zinc-400">“{h.forecast.reasoning}”</p>
+                      )}
+                      {h.compliance && !h.compliance.ok && (
+                        <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-xs text-amber-600 dark:text-amber-400">
+                          {h.compliance.flags.slice(0, 2).map((f) => (
+                            <li key={f}>{f}</li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   ))}
               </div>
@@ -210,13 +243,50 @@ export default function ResultView({
               ))}
             </ul>
           </div>
+          {result.taglines && result.taglines.length > 0 && (
+            <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Catchphrases</h3>
+              <div className="mt-3 space-y-2">
+                {result.taglines.map((t) => (
+                  <div key={t.text} className="flex items-center justify-between gap-2 rounded-lg border border-zinc-100 p-3 dark:border-zinc-800">
+                    <p className="text-sm font-medium">{t.text}</p>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold dark:bg-zinc-800">
+                        {t.confidence}%
+                      </span>
+                      <button
+                        onClick={() => copy(t.text, `tag-${t.text}`)}
+                        className="rounded-md border border-zinc-300 px-2 py-0.5 text-xs transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      >
+                        {copied === `tag-${t.text}` ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <CampaignBrief result={result} />
         </div>
       )}
 
       {tab === "Intelligence" && (
         <>
-          <IntelligencePanel result={result} />
-          <AbTestTracker result={result} />
+          <AbSimulator result={result} />
+          <div className="mt-5">
+            <IntelligencePanel result={result} />
+          </div>
+          <div className="mt-5">
+            <VoicePanel result={result} />
+          </div>
+          {result.keywords && result.keywords.length > 0 && (
+            <div className="mt-5">
+              <KeywordHeatmap result={result} />
+            </div>
+          )}
+          <div className="mt-5">
+            <AbTestTracker result={result} />
+          </div>
         </>
       )}
     </div>

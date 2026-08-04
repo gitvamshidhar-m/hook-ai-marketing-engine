@@ -1,5 +1,6 @@
-import { generateResult } from "./engine";
-import { classifyHook } from "./psych";
+﻿import { generateResult } from "./engine";
+import { classifyHook, detectVoice } from "./psych";
+import { catchphrases, complianceCheck, forecastHook, keywordMatrix } from "./enhance";
 import type { AnalyzeInput, AnalyzeResult, Channel, Hook } from "./types";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
@@ -13,9 +14,9 @@ export function hasAi() {
 }
 
 const CHANNEL_RULES: Record<Channel, string> = {
-  ad: "Ad headline: MAX 6 words. Front-load the payoff. No questions here — a bold claim is stronger.",
+  ad: "Ad headline: MAX 6 words. Front-load the payoff. No questions here â€” a bold claim is stronger.",
   email: "Email subject line: 3-8 words, curiosity + urgency. A 'RE:' or 'question' framing works well. No clickbait exclamation spam.",
-  youtube: "YouTube title: 40-55 chars, curiosity FIRST, but readable — this is it, the promise, then payoff in caps or a bracket.",
+  youtube: "YouTube title: 40-55 chars, curiosity FIRST, but readable â€” this is it, the promise, then payoff in caps or a bracket.",
   blog: "Blog H1: 6-10 words, clear and specific with a number or 'the' x 'exact way'. Authority + clarity beat cleverness.",
 };
 
@@ -25,13 +26,18 @@ function buildPrompt(input: AnalyzeInput, channel: Channel): string {
   const avoid = avoidPsych.length
     ? `\n- AVOID these already-used psychology triggers (try different ones): ${avoidPsych.join(", ")}`
     : "";
+  const voiceNote =
+    input.voiceSamples && input.voiceSamples.length
+      ? `\nMatch this brand voice exactly. Examples of their tone: ${input.voiceSamples.slice(0, 3).join(" | ")}`
+      : "";
+  const languageNote = input.language && input.language !== "en" ? `\nWrite the hooks in ${input.language}.` : "";
   const competitorNote =
     input.competitorHooks && input.competitorHooks.length
       ? `\nCompetitors already use: ${input.competitorHooks.slice(0, 4).join(" | ")}\n- Steer AWAY from matching them unless you can be sharper.`
       : "";
   const variationNote =
     variation > 0
-      ? `\nThis is variation #${variation}. The previous sets used generic/openings — produce FRESH, non-obvious angles this time.`
+      ? `\nThis is variation #${variation}. The previous sets used generic/openings â€” produce FRESH, non-obvious angles this time.`
       : "\nProduce the single strongest options (high CTR ambition).";
   return [
     "You are a senior digital marketing analyst and direct-response copywriter.",
@@ -44,13 +50,16 @@ function buildPrompt(input: AnalyzeInput, channel: Channel): string {
     variationNote,
     competitorNote,
     avoid,
+    voiceNote,
+    languageNote,
     "",
-    'JSON shape per line: {"channel":"' + channel + '","text":"...","score":82,"psychology":"Curiosity gap"}',
+    'JSON shape per line: {"channel":"' + channel + '","text":"...","score":82,"psychology":"Curiosity gap","forecast":{"emotion":"Curiosity spike","reasoning":"..."}}',
     "",
     "Rules:",
     `- text MUST be under ${channel === "ad" ? 40 : 75} characters.`,
     "- Vary the psychology trigger across the set (curiosity, loss aversion, social proof, specificity, contrarian, authority, story, identity, misdirection).",
     "- score is 0-100 predicting CTR lift vs a bland headline.",
+    "- forecast.emotion is the predicted reader emotion (e.g. Curiosity spike, FOMO, Trust, Surprise); forecast.reasoning is one short sentence explaining it.",
   ].join("\n");
 }
 
@@ -103,6 +112,7 @@ function parseHooks(raw: string): Array<Omit<Hook, "id" | "channelLabel">> {
           channel: j.channel,
           score: j.score,
           psychology: typeof j.psychology === "string" ? j.psychology : humanize(j.text),
+          forecast: j.forecast && typeof j.forecast.emotion === "string" ? j.forecast : undefined,
         });
       }
     } catch {
@@ -161,9 +171,21 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
         id: `${ch}-${variation}-${i}`,
         channelLabel: label,
         variation: variation > 0 ? `v${variation}` : undefined,
+        forecast: h.forecast || forecastHook(h.text),
+        compliance: complianceCheck({ channel: ch, text: h.text } as Hook),
       });
     });
   });
 
-  return { ...base, hooks: merged, aiPowered: true, model };
+  return {
+    ...base,
+    hooks: merged,
+    aiPowered: true,
+    model,
+    language: input.language || "en",
+    voice:
+      input.voiceSamples && input.voiceSamples.length ? detectVoice(input.voiceSamples) : base.voice,
+    taglines: catchphrases(input.topic, input.audience || ""),
+    keywords: keywordMatrix(input.competitorHooks || [], merged),
+  };
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AnalyzeResult, Channel } from "@/lib/types";
-import { CHANNEL_LABELS } from "@/lib/types";
+import { CHANNEL_LABELS, LANGUAGES } from "@/lib/types";
 import ResultView from "./ResultView";
 import Dashboard from "./Dashboard";
 import { recordRun, supabaseConfigured } from "@/lib/supabase";
@@ -17,6 +17,8 @@ export default function HookTool() {
   const [goal, setGoal] = useState("");
   const [channel, setChannel] = useState<Channel | "all">("all");
   const [competitors, setCompetitors] = useState("");
+  const [voiceSamples, setVoiceSamples] = useState("");
+  const [language, setLanguage] = useState("en");
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [tryingHarder, setTryingHarder] = useState(false);
@@ -81,6 +83,11 @@ export default function HookTool() {
             .split("\n")
             .map((l) => l.trim())
             .filter(Boolean),
+          voiceSamples: voiceSamples
+            .split("\n")
+            .map((l) => l.trim())
+            .filter(Boolean),
+          language: language || undefined,
           count: 3,
           variation: variationSeed,
           avoidPsych: avoid,
@@ -174,6 +181,20 @@ export default function HookTool() {
               ))}
             </select>
           </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Language</span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <label className="mt-4 block">
           <span className="mb-1 block text-sm font-medium">
@@ -184,6 +205,18 @@ export default function HookTool() {
             onChange={(e) => setCompetitors(e.target.value)}
             rows={2}
             placeholder={"Why your skincare routine isn't working\n10 anti-aging secrets dermatologists hate"}
+            className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+          />
+        </label>
+        <label className="mt-4 block">
+          <span className="mb-1 block text-sm font-medium">
+            Brand voice samples (optional) — paste 2–4 lines of existing copy to match their tone
+          </span>
+          <textarea
+            value={voiceSamples}
+            onChange={(e) => setVoiceSamples(e.target.value)}
+            rows={2}
+            placeholder={"We make healthy easy for busy families.\nResults you can feel in 30 days.\nHonest, no-nonsense skincare."}
             className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
           />
         </label>

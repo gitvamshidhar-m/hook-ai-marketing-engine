@@ -15,6 +15,29 @@ export type Hook = {
   score: number;
   psychology: string;
   variation?: string;
+  forecast?: Forecast;
+  compliance?: ComplianceCheck;
+};
+
+export type Forecast = {
+  emotion: string;
+  reasoning: string;
+};
+
+export type ComplianceCheck = {
+  ok: boolean;
+  flags: string[];
+};
+
+export type VoiceProfile = {
+  detected: string[];
+  summary: string;
+  source: "ai" | "heuristic";
+};
+
+export type Tagline = {
+  text: string;
+  confidence: number;
 };
 
 export type Gap = {
@@ -41,6 +64,16 @@ export type AnalyzeResult = {
   usp: Usp;
   aiPowered: boolean;
   model?: string;
+  voice?: VoiceProfile;
+  taglines?: Tagline[];
+  language?: string;
+  keywords?: KeywordRow[];
+};
+
+export type KeywordRow = {
+  keyword: string;
+  competitorMentions: number;
+  yourMentions: number;
 };
 
 export type AnalyzeInput = {
@@ -52,7 +85,20 @@ export type AnalyzeInput = {
   count?: number;
   variation?: number;
   avoidPsych?: string[];
+  voiceSamples?: string[];
+  language?: string;
 };
+
+export const LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "es", label: "Spanish" },
+  { code: "fr", label: "French" },
+  { code: "de", label: "German" },
+  { code: "hi", label: "Hindi" },
+  { code: "ar", label: "Arabic" },
+  { code: "pt", label: "Portuguese" },
+  { code: "ja", label: "Japanese" },
+];
 
 export type AbTest = {
   id: string;

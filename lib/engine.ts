@@ -1,4 +1,4 @@
-import {
+﻿import {
   ANGLE_CATEGORIES,
   CHANNEL_LABELS,
   type AnalyzeInput,
@@ -9,6 +9,8 @@ import {
   type Hook,
   type Usp,
 } from "./types";
+import { catchphrases, complianceCheck, forecastHook, keywordMatrix } from "./enhance";
+import { detectVoice } from "./psych";
 
 function cap(s: string, n: number) {
   return s.trim().split(/\s+/).slice(0, n).join(" ");
@@ -21,10 +23,10 @@ function buildAngles(topic: string): Angle[] {
   const map: Record<string, [string, string]> = {
     curiosity: [
       `Most people miss the one angle on "${t}" that actually gets opened.`,
-      "Curiosity gaps are unfinished ideas the brain feels compelled to close — an incomplete promise reads as an itch.",
+      "Curiosity gaps are unfinished ideas the brain feels compelled to close â€” an incomplete promise reads as an itch.",
     ],
     contrarian: [
-      `Everything you were told about "${t}" is backwards — and here's the proof.`,
+      `Everything you were told about "${t}" is backwards â€” and here's the proof.`,
       "Contradicting the status quo triggers a vigilance response; readers lean in to check who's right.",
     ],
     authority: [
@@ -44,7 +46,7 @@ function buildAngles(topic: string): Angle[] {
       "A precise figure signals the claim was measured, not invented, so it lands as a fact.",
     ],
     story: [
-      `I nearly quit "${t}" for good — then one reframe changed everything.`,
+      `I nearly quit "${t}" for good â€” then one reframe changed everything.`,
       "Story mimics lived experience and keeps attention from drifting the way abstract claims do.",
     ],
     specificity: [
@@ -56,7 +58,7 @@ function buildAngles(topic: string): Angle[] {
       "Identity appeals activate the reader's self-image; they act to protect the person they claim to be.",
     ],
     misdirection: [
-      `Stop chasing the "${t}" click — it's the wrong metric entirely.`,
+      `Stop chasing the "${t}" click â€” it's the wrong metric entirely.`,
       "Pointing at the obvious wrong answer surprises the reader and buys trust for free.",
     ],
   };
@@ -83,7 +85,7 @@ const AD_PATTERNS: PatternFn[] = [
   (t) => `Doing ${t} wrong? Start here.`,
   (t) => `The ${t} metric everybody forgets`,
   (t) => `Don't buy into ${t} until you've seen this`,
-  (t, a) => `${a} who fixed ${t} in one week — how?`,
+  (t, a) => `${a} who fixed ${t} in one week â€” how?`,
 ];
 const EMAIL_PATTERNS: PatternFn[] = [
   (t) => `RE: your ${t} status`,
@@ -97,11 +99,11 @@ const EMAIL_PATTERNS: PatternFn[] = [
 ];
 const YT_PATTERNS: PatternFn[] = [
   (t) => `Why everyone stops doing ${t} (and how to last)`,
-  (t) => `I tested ${t} for 30 days — the honest result`,
+  (t) => `I tested ${t} for 30 days â€” the honest result`,
   (t) => `${t} for beginners: the only guide you need`,
   (t) => `The ${t} trick that quietly doubled results`,
   (t) => `${t}, one year in: what actually worked`,
-  (t) => `Stop doing ${t} wrong — the #1 mistake`,
+  (t) => `Stop doing ${t} wrong â€” the #1 mistake`,
   (t, a) => `What ${a} wish they knew about ${t}`,
   (t) => `${t} in 2026: don't start until you watch`,
 ];
@@ -183,7 +185,7 @@ function buildGaps(topic: string, competitors: string[]): Gap[] {
     angleName: a.name,
     angleCategory: a.id,
     evidence: `Top competitor hooks cluster around ${seen.size >= 2 ? `${seen.size} angles` : "only a couple of angles"}; "${a.name}" is untapped in this batch.`,
-    suggestedHook: `Lead with ${a.name.toLowerCase()} for "${cap(topic, 5)}" — ${STAT_HINT[a.id]}.`,
+    suggestedHook: `Lead with ${a.name.toLowerCase()} for "${cap(topic, 5)}" â€” ${STAT_HINT[a.id]}.`,
   }));
 }
 
@@ -209,7 +211,7 @@ export function generateResult(input: AnalyzeInput): AnalyzeResult {
     for (let i = 0; i < count; i++) {
       const idx = (shift + i) % pats.length;
       const text = pats[idx](cap(input.topic, 5), input.audience || "marketers");
-      hooks.push({
+      const hook: Hook = {
         id: `${ch}-${variation}-${i}`,
         text,
         channel: ch,
@@ -217,7 +219,10 @@ export function generateResult(input: AnalyzeInput): AnalyzeResult {
         score: scoreHook(text, input.topic),
         psychology: psychologyOf(text),
         variation: variation > 0 ? `v${variation}` : undefined,
-      });
+        forecast: forecastHook(text),
+        compliance: complianceCheck({ channel: ch, text } as Hook),
+      };
+      hooks.push(hook);
     }
   });
   const usp: Usp = {
@@ -240,5 +245,9 @@ export function generateResult(input: AnalyzeInput): AnalyzeResult {
     gaps: buildGaps(input.topic, input.competitorHooks || []),
     usp,
     aiPowered: false,
+    language: input.language || "en",
+    voice: input.voiceSamples && input.voiceSamples.length ? detectVoice(input.voiceSamples) : undefined,
+    taglines: catchphrases(input.topic, input.audience || ""),
+    keywords: keywordMatrix(input.competitorHooks || [], hooks),
   };
 }

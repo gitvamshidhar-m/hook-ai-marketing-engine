@@ -32,6 +32,10 @@ export async function POST(req: NextRequest) {
     count: Math.min(body.count || 3, 5),
     variation: Math.max(0, Number(body.variation) || 0),
     avoidPsych: Array.isArray(body.avoidPsych) ? body.avoidPsych.slice(0, 6) : undefined,
+    voiceSamples: Array.isArray(body.voiceSamples)
+      ? body.voiceSamples.map((s: string) => s.trim()).filter(Boolean).slice(0, 4)
+      : undefined,
+    language: typeof body.language === "string" && body.language ? body.language : undefined,
   };
 
   const result = hasAi() ? await generateAiResult(input) : generateResult(input);
