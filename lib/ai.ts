@@ -1,7 +1,8 @@
 ﻿import { generateResult } from "./engine";
 import { classifyHook, detectVoice } from "./psych";
 import { catchphrases, complianceCheck, forecastHook, keywordMatrix } from "./enhance";
-import type { AnalyzeInput, AnalyzeResult, Channel, Hook } from "./types";
+import type { AdCopy, AnalyzeInput, AnalyzeResult, Channel, Hook } from "./types";
+import { CHANNEL_LABELS } from "./types";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
 const GROQ_KEY = process.env.GROQ_API_KEY || "";
@@ -188,4 +189,76 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
     taglines: catchphrases(input.topic, input.audience || ""),
     keywords: keywordMatrix(input.competitorHooks || [], merged),
   };
+}
+
+function parseAdCopies(raw: string): AdCopy[] {
+  const cleaned = raw.replace(/```json|```/g, "").trim();
+  const arrStart = cleaned.indexOf("[");
+  const arrEnd = cleaned.lastIndexOf("]");
+  if (arrStart === -1 || arrEnd === -1) return [];
+  try {
+    const arr = JSON.parse(cleaned.slice(arrStart, arrEnd + 1));
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((c) => typeof c.headline === "string" && c.headline.trim().length > 0)
+      .map((c) => ({
+        variant: c.variant === "B" ? "B" : "A",
+        angle: typeof c.angle === "string" ? c.angle : "Hook",
+        headline: c.headline.trim(),
+        subheadline: typeof c.subheadline === "string" ? c.subheadline.trim() : "",
+        body: typeof c.body === "string" ? c.body.trim() : "",
+        cta: typeof c.cta === "string" ? c.cta.trim() : "",
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export async function generateAiAdCopy(
+  result: AnalyzeResult,
+  channel: Channel
+): Promise<{ copies: AdCopy[]; model: string }> {
+  const language =
+    result.language && result.language !== "en"
+      ? `Write the copy in ${result.language}.`
+      : "Write the copy in English.";
+  const hooks = [...result.hooks].sort((a, b) => b.score - a.score).slice(0, 4);
+  const voiceLine = result.voice
+    ? `Match the brand voice (${result.voice.detected.join(", ")}). ${result.voice.summary}`
+    : "Use a confident, conversational marketing voice.";
+  const keywordLine =
+    result.keywords && result.keywords.length
+      ? `Naturally include some of these keywords where they fit: ${result.keywords.slice(0, 6).map((k) => k.keyword).join(", ")}.`
+      : "";
+  const taglineLine =
+    result.taglines && result.taglines.length
+      ? `You may pull a line from these catchphrases: ${result.taglines.slice(0, 3).map((t) => `"${t.text}"`).join(", ")}.`
+      : "";
+
+  const prompt = [
+    "You are a direct-response copywriter. Write ONE complete, paste-ready ad.",
+    `CHANNEL: ${CHANNEL_LABELS[channel]}`,
+    `TOPIC: ${result.topic}`,
+    `AUDIENCE: ${result.audience || "general"}`,
+    `GOAL: ${result.goal || "generate clicks"}`,
+    language,
+    voiceLine,
+    `Highest-scoring hooks to draw from: ${hooks.map((h) => `"${h.text}"`).join(", ")}`,
+    `POSITIONING: ${result.usp.positioningStatement}`,
+    `ELEVATOR: ${result.usp.elevatorPitch}`,
+    `DIFFERENTIATORS: ${result.usp.differentiators.join("; ")}`,
+    keywordLine,
+    taglineLine,
+    "",
+    "Return a JSON array with exactly 2 variants (A and B) using DIFFERENT psychology angles.",
+    'Shape: [{"variant":"A","angle":"Curiosity gap","headline":"...","subheadline":"...","body":"...","cta":"..."}]',
+    "Rules: headline under 12 words; subheadline under 20 words; body 2-3 short sentences; CTA imperative and under 6 words. No markdown, no commentary.",
+  ].join("\n");
+
+  if (GROQ_KEY) {
+    const raw = await callGroq(prompt);
+    return { copies: parseAdCopies(raw), model: `Groq ${GROQ_MODEL}` };
+  }
+  const raw = await callGemini(prompt);
+  return { copies: parseAdCopies(raw), model: `Gemini ${GEMINI_MODEL}` };
 }

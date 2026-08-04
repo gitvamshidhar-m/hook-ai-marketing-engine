@@ -6,13 +6,14 @@ import { CHANNEL_LABELS, ANGLE_CATEGORIES } from "@/lib/types";
 import IntelligencePanel from "./IntelligencePanel";
 import AbTestTracker from "./AbTestTracker";
 import AbSimulator from "./AbSimulator";
+import AdCopyBuilder from "./AdCopyBuilder";
 import VoicePanel from "./VoicePanel";
 import CampaignBrief from "./CampaignBrief";
 import KeywordHeatmap from "./KeywordHeatmap";
 import { buildShareUrl } from "@/lib/analytics";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
-const TABS = ["Hooks", "Angles", "Gap Scan", "USP", "Intelligence"] as const;
+const TABS = ["Hooks", "Angles", "Gap Scan", "USP", "Ad Copy", "Intelligence"] as const;
 type Tab = (typeof TABS)[number];
 
 export default function ResultView({
@@ -267,6 +268,12 @@ export default function ResultView({
             </div>
           )}
           <CampaignBrief result={result} />
+        </div>
+      )}
+
+      {tab === "Ad Copy" && (
+        <div className="mt-5">
+          <AdCopyBuilder result={result} />
         </div>
       )}
 

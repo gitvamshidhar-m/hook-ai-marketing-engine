@@ -100,6 +100,15 @@ export const LANGUAGES = [
   { code: "ja", label: "Japanese" },
 ];
 
+export type AdCopy = {
+  variant: string;
+  angle: string;
+  headline: string;
+  subheadline: string;
+  body: string;
+  cta: string;
+};
+
 export type AbTest = {
   id: string;
   topic: string;
