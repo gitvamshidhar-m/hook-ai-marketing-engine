@@ -20,14 +20,17 @@ export default function ResultView({
   result,
   onTryHarder,
   tryingHarder,
+  loading = false,
 }: {
   result: AnalyzeResult;
   onTryHarder?: () => void;
   tryingHarder?: boolean;
+  loading?: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("Hooks");
   const [copied, setCopied] = useState("");
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+  const [showScoreTip, setShowScoreTip] = useState(false);
 
   async function copy(text: string, id: string) {
     try {
@@ -53,11 +56,15 @@ export default function ResultView({
   const best = [...result.hooks].sort((a, b) => b.score - a.score)[0];
 
   return (
-    <div className="mt-6">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={`mt-6 transition-opacity duration-300 ${loading ? "pointer-events-none opacity-40" : ""}`}>
+      <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Results sections">
         {TABS.map((t) => (
           <button
             key={t}
+            role="tab"
+            id={`tab-${t}`}
+            aria-selected={tab === t}
+            aria-controls={`panel-${t}`}
             onClick={() => setTab(t)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
               tab === t
@@ -84,7 +91,7 @@ export default function ResultView({
           {onTryHarder && (
             <button
               onClick={onTryHarder}
-              disabled={tryingHarder}
+              disabled={tryingHarder || loading}
               className="rounded-full border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
             >
               {tryingHarder ? "Trying harder…" : "Try harder (new angles)"}
@@ -98,17 +105,43 @@ export default function ResultView({
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">
               Best hook · predicted score {best.score}/100
-              <span className="ml-2 cursor-help text-indigo-200/80" title="Score = pattern-weighted prediction of CTR lift vs a bland headline, from specificity, trigger strength, and length. AI uses its own judgment too.">
+              <button
+                type="button"
+                onClick={() => setShowScoreTip((v) => !v)}
+                className="ml-2 rounded-full border border-indigo-300/50 px-1.5 text-xs leading-5"
+                aria-expanded={showScoreTip}
+                aria-label="What does the score mean?"
+              >
                 ⓘ
-              </span>
+              </button>
             </p>
+            <span className="flex shrink-0 items-center gap-2">
+              <button
+                onClick={() => copy(best.text, "best")}
+                className="rounded-md border border-white/40 px-2.5 py-1 text-xs font-medium transition hover:bg-white/10"
+              >
+                {copied === "best" ? "Copied" : "Copy"}
+              </button>
+              <button
+                onClick={() => setTab("Ad Copy")}
+                className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50"
+              >
+                Build into an ad →
+              </button>
+            </span>
           </div>
+          {showScoreTip && (
+            <p className="mt-2 rounded-lg bg-white/10 px-3 py-2 text-xs leading-relaxed text-indigo-100">
+              Score = pattern-weighted prediction of CTR lift vs. a bland headline, from specificity, trigger
+              strength, and length. AI uses its own judgment too.
+            </p>
+          )}
           <p className="mt-1 text-lg font-semibold">{best.text}</p>
         </div>
       )}
 
       {tab === "Hooks" && (
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="mt-5 grid gap-4 md:grid-cols-2" role="tabpanel" id="panel-Hooks" aria-labelledby="tab-Hooks">
           {CHANNEL_ORDER.map((ch) => (
             <section key={ch} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">{CHANNEL_LABELS[ch]}</h3>
@@ -183,7 +216,7 @@ export default function ResultView({
       )}
 
       {tab === "Angles" && (
-        <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="mt-5 grid gap-4 md:grid-cols-2" role="tabpanel" id="panel-Angles" aria-labelledby="tab-Angles">
           {result.angles.map((a) => {
             const meta = ANGLE_CATEGORIES.find((c) => c.id === a.category);
             return (
@@ -201,7 +234,7 @@ export default function ResultView({
       )}
 
       {tab === "Gap Scan" && (
-        <div className="mt-5 space-y-4">
+        <div className="mt-5 space-y-4" role="tabpanel" id="panel-Gap Scan" aria-labelledby="tab-Gap Scan">
           {result.gaps.map((g) => (
             <div key={g.angleCategory} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
               <div className="flex items-center justify-between gap-2">
@@ -221,7 +254,7 @@ export default function ResultView({
       )}
 
       {tab === "USP" && (
-        <div className="mt-5 space-y-4">
+        <div className="mt-5 space-y-4" role="tabpanel" id="panel-USP" aria-labelledby="tab-USP">
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Positioning statement</h3>
             <p className="mt-2 text-lg font-medium">{result.usp.positioningStatement}</p>
@@ -272,7 +305,7 @@ export default function ResultView({
       )}
 
       {tab === "Ad Copy" && (
-        <div className="mt-5">
+        <div className="mt-5" role="tabpanel" id="panel-Ad Copy" aria-labelledby="tab-Ad Copy">
           <AdCopyBuilder result={result} />
         </div>
       )}

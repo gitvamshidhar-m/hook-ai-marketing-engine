@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AnalyzeResult, Channel } from "@/lib/types";
 import { CHANNEL_LABELS, LANGUAGES } from "@/lib/types";
 import ResultView from "./ResultView";
@@ -10,6 +10,13 @@ import { recordRun, supabaseConfigured } from "@/lib/supabase";
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
 const FREE_DAILY = 5;
 const RUN_KEY = "hookai-runlog";
+const PROGRESS_STEPS = [
+  "Mapping psychological angles…",
+  "Scoring hook strength…",
+  "Checking channel format…",
+  "Reading brand voice…",
+  "Matching competitor gaps…",
+];
 
 export default function HookTool() {
   const [topic, setTopic] = useState("");
@@ -25,6 +32,19 @@ export default function HookTool() {
   const [error, setError] = useState("");
   const [variation, setVariation] = useState(0);
   const [rerunsLeft, setRerunsLeft] = useState<number | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [progressStep, setProgressStep] = useState(0);
+  const resultRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!loading) return;
+    const id = setInterval(() => setProgressStep((s) => (s + 1) % PROGRESS_STEPS.length), 2400);
+    return () => clearInterval(id);
+  }, [loading]);
+
+  useEffect(() => {
+    if (result) resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [result]);
 
   function usedToday(): number {
     if (typeof window === "undefined") return 0;
@@ -196,30 +216,48 @@ export default function HookTool() {
             </select>
           </label>
         </div>
-        <label className="mt-4 block">
-          <span className="mb-1 block text-sm font-medium">
-            Competitor headlines / ad copy (one per line) — feeds the gap scanner
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen((o) => !o)}
+          className="mt-4 flex items-center gap-1 text-sm font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400"
+          aria-expanded={advancedOpen}
+        >
+          <span
+            className={`inline-block transition-transform ${advancedOpen ? "rotate-90" : ""}`}
+            aria-hidden
+          >
+            ▸
           </span>
-          <textarea
-            value={competitors}
-            onChange={(e) => setCompetitors(e.target.value)}
-            rows={2}
-            placeholder={"Why your skincare routine isn't working\n10 anti-aging secrets dermatologists hate"}
-            className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
-          />
-        </label>
-        <label className="mt-4 block">
-          <span className="mb-1 block text-sm font-medium">
-            Brand voice samples (optional) — paste 2–4 lines of existing copy to match their tone
-          </span>
-          <textarea
-            value={voiceSamples}
-            onChange={(e) => setVoiceSamples(e.target.value)}
-            rows={2}
-            placeholder={"We make healthy easy for busy families.\nResults you can feel in 30 days.\nHonest, no-nonsense skincare."}
-            className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
-          />
-        </label>
+          Advanced options (competitor scan, brand voice)
+        </button>
+        {advancedOpen && (
+          <div className="mt-3 space-y-4 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium">
+                Competitor headlines / ad copy (one per line) — feeds the gap scanner
+              </span>
+              <textarea
+                value={competitors}
+                onChange={(e) => setCompetitors(e.target.value)}
+                rows={2}
+                placeholder={"Why your skincare routine isn't working\n10 anti-aging secrets dermatologists hate"}
+                className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium">
+                Brand voice samples (optional) — paste 2–4 lines of existing copy to match their tone
+              </span>
+              <textarea
+                value={voiceSamples}
+                onChange={(e) => setVoiceSamples(e.target.value)}
+                rows={2}
+                placeholder={"We make healthy easy for busy families.\nResults you can feel in 30 days.\nHonest, no-nonsense skincare."}
+                className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+              />
+            </label>
+          </div>
+        )}
         <div className="mt-4 flex items-center gap-3">
           <button
             onClick={() => run(0, [])}
@@ -228,13 +266,35 @@ export default function HookTool() {
           >
             {loading ? "Analyzing…" : "Generate hooks"}
           </button>
-          {error && <p className="text-sm text-rose-600">{error}</p>}
+          {loading && (
+            <p className="text-sm text-zinc-500" role="status" aria-live="polite">
+              {PROGRESS_STEPS[progressStep]}
+            </p>
+          )}
+          {error && (
+            <p className="text-sm text-rose-600" role="alert">
+              {error}
+            </p>
+          )}
         </div>
       </section>
 
-      {result && (
-        <ResultView result={result} onTryHarder={tryHarder} tryingHarder={tryingHarder} />
+      {loading && !result && (
+        <div className="mt-8 animate-pulse" aria-hidden>
+          <div className="h-5 w-48 rounded bg-zinc-200 dark:bg-zinc-800" />
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-32 rounded-2xl bg-zinc-100 dark:bg-zinc-900" />
+            ))}
+          </div>
+        </div>
       )}
+
+      <div ref={resultRef}>
+        {result && (
+          <ResultView result={result} onTryHarder={tryHarder} tryingHarder={tryingHarder} loading={loading} />
+        )}
+      </div>
       <Dashboard result={result} />
     </div>
   );

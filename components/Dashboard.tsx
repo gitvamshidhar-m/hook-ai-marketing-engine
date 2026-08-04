@@ -69,7 +69,7 @@ export default function Dashboard({ result }: { result: AnalyzeResult | null }) 
     { label: "Hooks generated", value: merged.hooks.toLocaleString(), hint: "this browser" },
     { label: "Runs", value: merged.runs, hint: "this browser" },
     { label: "Best predicted score", value: merged.best ? `${merged.best}/100` : "—", hint: "your ceiling" },
-    { label: "Daily streak", value: `${merged.streak}🔥`, hint: "keep coming back" },
+    { label: "Daily streak", value: merged.streak, icon: "🔥", hint: "keep coming back" },
   ];
 
   return (
@@ -83,7 +83,10 @@ export default function Dashboard({ result }: { result: AnalyzeResult | null }) 
           {cards.map((c) => (
             <div key={c.label} className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-950">
               <p className="text-xs text-zinc-500">{c.label}</p>
-              <p className="mt-1 text-2xl font-bold">{c.value}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-2xl font-bold">
+                {c.value}
+                {c.icon && <span className="text-xl" aria-hidden>{c.icon}</span>}
+              </p>
               <p className="text-xs text-zinc-400">{c.hint}</p>
             </div>
           ))}
