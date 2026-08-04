@@ -6,12 +6,14 @@ import { CHANNEL_LABELS } from "./types";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
 const GROQ_KEY = process.env.GROQ_API_KEY || "";
+const NVIDIA_KEY = process.env.NVIDIA_API_KEY || "";
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash-lite";
 const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const NVIDIA_MODEL = process.env.NVIDIA_MODEL || "meta/llama-3.1-8b-instruct";
 
 export function hasAi() {
-  return Boolean(GEMINI_KEY || GROQ_KEY);
+  return Boolean(GEMINI_KEY || GROQ_KEY || NVIDIA_KEY);
 }
 
 const CHANNEL_RULES: Record<Channel, string> = {
@@ -97,6 +99,22 @@ async function callGroq(prompt: string): Promise<string> {
   return data?.choices?.[0]?.message?.content || "";
 }
 
+async function callNvidia(prompt: string): Promise<string> {
+  const res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${NVIDIA_KEY}` },
+    body: JSON.stringify({
+      model: NVIDIA_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.95,
+      max_tokens: 2000,
+    }),
+  });
+  if (!res.ok) throw new Error(`NVIDIA ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content || "";
+}
+
 function parseHooks(raw: string): Array<Omit<Hook, "id" | "channelLabel">> {
   const cleaned = raw
     .replace(/```json|```/g, "")
@@ -163,6 +181,8 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
 
   const ran =
     (GROQ_KEY && (await runWith((ch) => callGroq(buildPrompt({ ...input, count: input.count || 3 }, ch)), `Groq ${GROQ_MODEL}`))) ||
+    (NVIDIA_KEY &&
+      (await runWith((ch) => callNvidia(buildPrompt({ ...input, count: input.count || 3 }, ch)), `NVIDIA ${NVIDIA_MODEL}`))) ||
     (GEMINI_KEY && (await runWith((ch) => callGemini(buildPrompt({ ...input, count: input.count || 3 }, ch)), `Gemini ${GEMINI_MODEL}`)));
 
   if (!ran) {
@@ -272,7 +292,16 @@ export async function generateAiAdCopy(
       const copies = parseAdCopies(raw);
       if (copies.length > 0) return { copies, model: `Groq ${GROQ_MODEL}` };
     } catch (e) {
-      console.error("Groq failed for ad copy, trying Gemini. Raw error:", e);
+      console.error("Groq failed for ad copy, trying NVIDIA. Raw error:", e);
+    }
+  }
+  if (NVIDIA_KEY) {
+    try {
+      const raw = await callNvidia(prompt);
+      const copies = parseAdCopies(raw);
+      if (copies.length > 0) return { copies, model: `NVIDIA ${NVIDIA_MODEL}` };
+    } catch (e) {
+      console.error("NVIDIA failed for ad copy, trying Gemini. Raw error:", e);
     }
   }
   if (!GEMINI_KEY) return { copies: [], model: "" };
