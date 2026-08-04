@@ -109,6 +109,67 @@ export type AdCopy = {
   cta: string;
 };
 
+export type FunnelStage = "TOFU" | "MOFU" | "BOFU";
+
+export type FunnelMap = {
+  stage: FunnelStage;
+  label: string;
+  hooks: Hook[];
+  share: number;
+};
+
+export type RoasProjection = {
+  dailyBudget: number;
+  cpm: number;
+  conversionValue: number;
+  conversionRate: number;
+  rows: {
+    hook: Hook;
+    ctr: number;
+    cpc: number;
+    clicks: number;
+    spend: number;
+    conversions: number;
+    revenue: number;
+    roas: number;
+  }[];
+  best: (RoasProjection["rows"][number] & {}) | null;
+};
+
+export type PlatformPolicy = {
+  platform: "Meta" | "TikTok" | "Google";
+  flags: string[];
+  ok: boolean;
+};
+
+export type TestingStep = {
+  step: number;
+  hook: Hook;
+  strategy: string;
+  minClicks: number;
+  durationDays: number;
+  verdict: string;
+};
+
+export type TargetingSuggestions = {
+  meta: string[];
+  tiktok: string[];
+  google: string[];
+  note: string;
+};
+
+export type SovRow = {
+  angle: string;
+  you: number;
+  competitors: number;
+};
+
+export type MessageMatchResult = {
+  score: number;
+  matches: { hook: Hook; matched: string[]; missing: string[] }[];
+  note: string;
+};
+
 export type AbTest = {
   id: string;
   topic: string;
