@@ -142,21 +142,32 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
 
   const rawByChannel = new Map<string, string>();
   let model = "";
-  try {
-    for (const ch of channels) {
-      let raw = "";
-      if (GROQ_KEY) {
-        raw = await callGroq(buildPrompt({ ...input, count: input.count || 3 }, ch));
-        model = `Groq ${GROQ_MODEL}`;
-      } else if (GEMINI_KEY) {
-        raw = await callGemini(buildPrompt({ ...input, count: input.count || 3 }, ch));
-        model = `Gemini ${GEMINI_MODEL}`;
+  let lastError: unknown = null;
+
+  async function runWith(
+    caller: (ch: Channel) => Promise<string>,
+    label: string
+  ): Promise<boolean> {
+    try {
+      for (const ch of channels) {
+        rawByChannel.set(ch, await caller(ch));
       }
-      rawByChannel.set(ch, raw);
+      model = label;
+      return true;
+    } catch (e) {
+      lastError = e;
+      console.error(`${label} failed (${channels.length} channels). Raw error:`, e);
+      return false;
     }
-  } catch (e) {
-    console.error("AI call failed, falling back to engine. Raw error:", e, "| model used:", model);
-    return input.debug ? { ...base, aiDebug: String(e) } : base;
+  }
+
+  const ran =
+    (GROQ_KEY && (await runWith((ch) => callGroq(buildPrompt({ ...input, count: input.count || 3 }, ch)), `Groq ${GROQ_MODEL}`))) ||
+    (GEMINI_KEY && (await runWith((ch) => callGemini(buildPrompt({ ...input, count: input.count || 3 }, ch)), `Gemini ${GEMINI_MODEL}`)));
+
+  if (!ran) {
+    console.error("All AI providers failed, falling back to engine. Raw error:", lastError);
+    return input.debug ? { ...base, aiDebug: String(lastError) } : base;
   }
 
   const merged: Hook[] = [];
@@ -256,9 +267,16 @@ export async function generateAiAdCopy(
   ].join("\n");
 
   if (GROQ_KEY) {
-    const raw = await callGroq(prompt);
-    return { copies: parseAdCopies(raw), model: `Groq ${GROQ_MODEL}` };
+    try {
+      const raw = await callGroq(prompt);
+      const copies = parseAdCopies(raw);
+      if (copies.length > 0) return { copies, model: `Groq ${GROQ_MODEL}` };
+    } catch (e) {
+      console.error("Groq failed for ad copy, trying Gemini. Raw error:", e);
+    }
   }
+  if (!GEMINI_KEY) return { copies: [], model: "" };
   const raw = await callGemini(prompt);
-  return { copies: parseAdCopies(raw), model: `Gemini ${GEMINI_MODEL}` };
+  const copies = parseAdCopies(raw);
+  return { copies, model: `Gemini ${GEMINI_MODEL}` };
 }
