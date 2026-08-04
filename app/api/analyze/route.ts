@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
     competitorHooks: competitors,
     channel: body.channel,
     count: Math.min(body.count || 3, 5),
+    variation: Math.max(0, Number(body.variation) || 0),
+    avoidPsych: Array.isArray(body.avoidPsych) ? body.avoidPsych.slice(0, 6) : undefined,
   };
 
   const result = hasAi() ? await generateAiResult(input) : generateResult(input);

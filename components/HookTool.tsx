@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import type { AnalyzeResult, Channel } from "@/lib/types";
-import { CHANNEL_LABELS, ANGLE_CATEGORIES } from "@/lib/types";
+import { CHANNEL_LABELS } from "@/lib/types";
+import ResultView from "./ResultView";
 import Dashboard from "./Dashboard";
+import { recordRun, supabaseConfigured } from "@/lib/supabase";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
-
-const TABS = ["Hooks", "Angles", "Gap Scan", "USP"] as const;
-type Tab = (typeof TABS)[number];
+const FREE_DAILY = 5;
+const RUN_KEY = "hookai-runlog";
 
 export default function HookTool() {
   const [topic, setTopic] = useState("");
@@ -18,15 +19,55 @@ export default function HookTool() {
   const [competitors, setCompetitors] = useState("");
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [tryingHarder, setTryingHarder] = useState(false);
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<Tab>("Hooks");
-  const [copied, setCopied] = useState("");
+  const [variation, setVariation] = useState(0);
+  const [rerunsLeft, setRerunsLeft] = useState<number | null>(null);
 
-  async function run() {
+  function usedToday(): number {
+    if (typeof window === "undefined") return 0;
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const raw = localStorage.getItem(RUN_KEY);
+      const log: Record<string, number> = raw ? JSON.parse(raw) : {};
+      return log[today] || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function bumpUsed() {
+    if (typeof window === "undefined") return;
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      const raw = localStorage.getItem(RUN_KEY);
+      const log: Record<string, number> = raw ? JSON.parse(raw) : {};
+      log[today] = (log[today] || 0) + 1;
+      localStorage.setItem(RUN_KEY, JSON.stringify(log));
+      setRerunsLeft(Math.max(0, FREE_DAILY - log[today]));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function statsPayload(best: AnalyzeResult) {
+    const top = best.hooks.reduce((a, b) => (b.score > a.score ? b : a), best.hooks[0]);
+    return {
+      topic: best.topic,
+      hooks: best.hooks.length,
+      bestScore: top ? top.score : 0,
+      aiPowered: best.aiPowered,
+    };
+  }
+
+  async function run(variationSeed: number, avoid: string[]) {
     if (!topic.trim()) return setError("Enter a topic to start.");
+    if (variationSeed === 0 && usedToday() >= FREE_DAILY) {
+      setError(`You hit the free limit (${FREE_DAILY} runs/day). Try harder variations still work, or come back tomorrow.`);
+      return;
+    }
     setLoading(true);
     setError("");
-    setResult(null);
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -41,34 +82,55 @@ export default function HookTool() {
             .map((l) => l.trim())
             .filter(Boolean),
           count: 3,
+          variation: variationSeed,
+          avoidPsych: avoid,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
       setResult(data);
-      setTab("Hooks");
+      setVariation(variationSeed);
+      if (variationSeed === 0) {
+        bumpUsed();
+        recordRun(statsPayload(data));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error.");
     } finally {
       setLoading(false);
+      setTryingHarder(false);
     }
   }
 
-  async function copy(text: string, id: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(id);
-      setTimeout(() => setCopied(""), 1500);
-    } catch {
-      /* clipboard unavailable */
-    }
+  function reset() {
+    setResult(null);
+    setVariation(0);
+    setError("");
   }
 
-  const best = result ? [...result.hooks].sort((a, b) => b.score - a.score)[0] : null;
+  function tryHarder() {
+    setTryingHarder(true);
+    const avoid = result ? result.hooks.map((h) => h.psychology) : [];
+    run(variation + 1, avoid);
+  }
+
+  const remaining =
+    rerunsLeft !== null ? rerunsLeft : Math.max(0, FREE_DAILY - usedToday());
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <span className="text-xs text-zinc-500">
+            Free plan · {remaining}/{FREE_DAILY} runs today{supabaseConfigured ? "" : " (trying harder is unlimited)"}
+          </span>
+          <button
+            onClick={reset}
+            className="text-xs text-zinc-400 underline-offset-2 hover:underline"
+          >
+            New topic
+          </button>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Topic / product / niche</span>
@@ -127,7 +189,7 @@ export default function HookTool() {
         </label>
         <div className="mt-4 flex items-center gap-3">
           <button
-            onClick={run}
+            onClick={() => run(0, [])}
             disabled={loading}
             className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -138,142 +200,7 @@ export default function HookTool() {
       </section>
 
       {result && (
-        <>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                  tab === t
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black"
-                    : "border border-zinc-300 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-300"
-                }`}
-              >
-                {t}
-                {t === "Hooks" && ` (${result.hooks.length})`}
-              </button>
-            ))}
-            {result.aiPowered && (
-              <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                AI-powered · {result.model}
-              </span>
-            )}
-          </div>
-
-          {best && (
-            <div className="mt-5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 p-5 text-white">
-              <p className="text-xs font-semibold uppercase tracking-wider text-indigo-200">Best hook · predicted score {best.score}/100</p>
-              <p className="mt-1 text-lg font-semibold">{best.text}</p>
-            </div>
-          )}
-
-          {tab === "Hooks" && (
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {CHANNEL_ORDER.map((ch) => (
-                <section key={ch} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">{CHANNEL_LABELS[ch]}</h3>
-                  <div className="mt-3 space-y-3">
-                    {result.hooks
-                      .filter((h) => h.channel === ch)
-                      .map((h) => (
-                        <div key={h.id} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm">{h.text}</p>
-                            <div className="flex shrink-0 items-center gap-2">
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                  h.score >= 80
-                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                                    : h.score >= 60
-                                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                                      : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                                }`}
-                              >
-                                {h.score}
-                              </span>
-                              <button
-                                onClick={() => copy(h.text, h.id)}
-                                className="rounded-md border border-zinc-300 px-2 py-0.5 text-xs transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                              >
-                                {copied === h.id ? "Copied" : "Copy"}
-                              </button>
-                            </div>
-                          </div>
-                          <p className="mt-2 text-xs text-zinc-500">{h.psychology}</p>
-                        </div>
-                      ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-          )}
-
-          {tab === "Angles" && (
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {result.angles.map((a) => {
-                const meta = ANGLE_CATEGORIES.find((c) => c.id === a.category);
-                return (
-                  <div key={a.category} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="flex items-center gap-2">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: meta?.tint }} />
-                      <h3 className="font-semibold">{a.name}</h3>
-                    </div>
-                    <p className="mt-2 text-sm">{a.description}</p>
-                    <p className="mt-2 text-xs text-zinc-500">{a.whyItWorks}</p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {tab === "Gap Scan" && (
-            <div className="mt-5 space-y-4">
-              {result.gaps.map((g) => (
-                <div key={g.angleCategory} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-semibold">Untapped angle: {g.angleName}</h3>
-                    <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-                      Blue ocean
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{g.evidence}</p>
-                  <p className="mt-1 text-sm">{g.suggestedHook}</p>
-                </div>
-              ))}
-              {result.gaps.length === 0 && (
-                <p className="text-sm text-zinc-500">Add competitor headlines above to scan for untapped angles.</p>
-              )}
-            </div>
-          )}
-
-          {tab === "USP" && (
-            <div className="mt-5 space-y-4">
-              <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Positioning statement</h3>
-                <p className="mt-2 text-lg font-medium">{result.usp.positioningStatement}</p>
-                <button
-                  onClick={() => copy(result.usp.positioningStatement, "usp")}
-                  className="mt-3 rounded-md border border-zinc-300 px-3 py-1 text-xs transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-                >
-                  {copied === "usp" ? "Copied" : "Copy"}
-                </button>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Elevator pitch</h3>
-                <p className="mt-2 text-lg font-medium">{result.usp.elevatorPitch}</p>
-              </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Differentiators</h3>
-                <ul className="mt-2 list-inside list-disc space-y-1">
-                  {result.usp.differentiators.map((d) => (
-                    <li key={d}>{d}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-        </>
+        <ResultView result={result} onTryHarder={tryHarder} tryingHarder={tryingHarder} />
       )}
       <Dashboard result={result} />
     </div>

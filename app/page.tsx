@@ -18,14 +18,29 @@ const FEATURES = [
     icon: "🧭",
   },
   {
+    title: "Angle Coverage Meter",
+    desc: "Live heatmap of the 10 psychological angles — see where your campaign is concentrated and where you're free to play.",
+    icon: "📊",
+  },
+  {
     title: "Channel-Native Hooks",
     desc: "Ad headlines, email subject lines, YouTube titles, and blog H1s — formatted for where they'll actually run.",
     icon: "📣",
   },
   {
+    title: "A/B Test Tracker",
+    desc: "Pick winners between hooks; the tracker learns which psychology wins so future runs lean your proven direction.",
+    icon: "⚔️",
+  },
+  {
     title: "USP Framer",
     desc: "Turns a vague product description into a positioning statement and elevator pitch you can steal verbatim.",
     icon: "💎",
+  },
+  {
+    title: "Shareable Results",
+    desc: "One click compresses your whole campaign into a shareable link — send it to a client or teammate.",
+    icon: "🔗",
   },
 ];
 

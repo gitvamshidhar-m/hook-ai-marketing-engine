@@ -1,5 +1,6 @@
 import { generateResult } from "./engine";
-import type { AnalyzeInput, AnalyzeResult, Hook } from "./types";
+import { classifyHook } from "./psych";
+import type { AnalyzeInput, AnalyzeResult, Channel, Hook } from "./types";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
 const GROQ_KEY = process.env.GROQ_API_KEY || "";
@@ -11,25 +12,45 @@ export function hasAi() {
   return Boolean(GEMINI_KEY || GROQ_KEY);
 }
 
-function geminiPrompt(input: AnalyzeInput, channels: string[]): string {
+const CHANNEL_RULES: Record<Channel, string> = {
+  ad: "Ad headline: MAX 6 words. Front-load the payoff. No questions here — a bold claim is stronger.",
+  email: "Email subject line: 3-8 words, curiosity + urgency. A 'RE:' or 'question' framing works well. No clickbait exclamation spam.",
+  youtube: "YouTube title: 40-55 chars, curiosity FIRST, but readable — this is it, the promise, then payoff in caps or a bracket.",
+  blog: "Blog H1: 6-10 words, clear and specific with a number or 'the' x 'exact way'. Authority + clarity beat cleverness.",
+};
+
+function buildPrompt(input: AnalyzeInput, channel: Channel): string {
+  const variation = input.variation && input.variation > 0 ? input.variation : 0;
+  const avoidPsych = input.avoidPsych || [];
+  const avoid = avoidPsych.length
+    ? `\n- AVOID these already-used psychology triggers (try different ones): ${avoidPsych.join(", ")}`
+    : "";
+  const competitorNote =
+    input.competitorHooks && input.competitorHooks.length
+      ? `\nCompetitors already use: ${input.competitorHooks.slice(0, 4).join(" | ")}\n- Steer AWAY from matching them unless you can be sharper.`
+      : "";
+  const variationNote =
+    variation > 0
+      ? `\nThis is variation #${variation}. The previous sets used generic/openings — produce FRESH, non-obvious angles this time.`
+      : "\nProduce the single strongest options (high CTR ambition).";
   return [
     "You are a senior digital marketing analyst and direct-response copywriter.",
-    "Generate hyper-specific, original hooks for the following campaign.",
-    "",
+    "Generate original, line-ready hooks. Output ONLY JSON lines, one hook per line. No markdown, no preamble.",
     `Topic: ${input.topic}`,
     `Audience: ${input.audience || "general marketers"}`,
     `Goal: ${input.goal || "generate clicks"}`,
-    `Channels: ${channels.join(", ")}`,
-    `Number of hooks per channel: ${input.count || 3}`,
+    `Channel: ${CHANNEL_RULES[channel]}`,
+    `Number of hooks for this channel: ${input.count || 3}`,
+    variationNote,
+    competitorNote,
+    avoid,
     "",
-    "For EACH channel, output exactly this JSON line:",
-    '{"channel":"ad","text":"...","score":82,"psychology":"Curiosity gap"}',
+    'JSON shape per line: {"channel":"' + channel + '","text":"...","score":82,"psychology":"Curiosity gap"}',
     "",
     "Rules:",
-    "- Each text MUST be under 75 characters.",
-    "- Vary the psychological triggers (curiosity, loss aversion, social proof, specificity, contrarian, authority, story, identity).",
-    "- Scores are 0-100 reflecting expected CTR lift vs a bland headline.",
-    "- Output ONLY the JSON lines, one per hook. No markdown, no preamble.",
+    `- text MUST be under ${channel === "ad" ? 40 : 75} characters.`,
+    "- Vary the psychology trigger across the set (curiosity, loss aversion, social proof, specificity, contrarian, authority, story, identity, misdirection).",
+    "- score is 0-100 predicting CTR lift vs a bland headline.",
   ].join("\n");
 }
 
@@ -41,7 +62,7 @@ async function callGemini(prompt: string): Promise<string> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.9, maxOutputTokens: 1600 },
+        generationConfig: { temperature: 0.9, maxOutputTokens: 2000 },
       }),
     }
   );
@@ -57,8 +78,8 @@ async function callGroq(prompt: string): Promise<string> {
     body: JSON.stringify({
       model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.9,
-      max_tokens: 1600,
+      temperature: 0.95,
+      max_tokens: 2000,
     }),
   });
   if (!res.ok) throw new Error(`Groq ${res.status}: ${await res.text()}`);
@@ -77,7 +98,12 @@ function parseHooks(raw: string): Array<Omit<Hook, "id" | "channelLabel">> {
     try {
       const j = JSON.parse(line);
       if (typeof j.text === "string" && typeof j.score === "number") {
-        out.push({ text: j.text.trim(), channel: j.channel, score: j.score, psychology: j.psychology });
+        out.push({
+          text: j.text.trim(),
+          channel: j.channel,
+          score: j.score,
+          psychology: typeof j.psychology === "string" ? j.psychology : humanize(j.text),
+        });
       }
     } catch {
       /* skip malformed line */
@@ -86,42 +112,55 @@ function parseHooks(raw: string): Array<Omit<Hook, "id" | "channelLabel">> {
   return out;
 }
 
+function humanize(t: string) {
+  const id = classifyHook(t);
+  const map: Record<string, string> = {
+    data: "Data-backed", contrarian: "Contrarian", curiosity: "Curiosity gap",
+    fear: "Loss aversion", social: "Social proof", specificity: "Specificity",
+    authority: "Authority", story: "Story-driven", ego: "Identity / ego", identity: "Identity",
+    misdirection: "Misdirection",
+  };
+  return map[id] || "Curiosity gap";
+}
+
 export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResult> {
   const base = generateResult(input);
-  const channels = input.channel && input.channel !== "all" ? [input.channel] : ["ad", "email", "youtube", "blog"];
-  const prompt = geminiPrompt(input, channels);
-  let raw = "";
+  const channels: Channel[] =
+    input.channel && input.channel !== "all" ? [input.channel] : ["ad", "email", "youtube", "blog"];
+  const variation = input.variation && input.variation > 0 ? input.variation : 0;
+
+  const rawByChannel = new Map<string, string>();
   let model = "";
   try {
-    if (GEMINI_KEY) {
-      raw = await callGemini(prompt);
-      model = `Gemini ${GEMINI_MODEL}`;
-    } else if (GROQ_KEY) {
-      raw = await callGroq(prompt);
-      model = `Groq ${GROQ_MODEL}`;
+    for (const ch of channels) {
+      let raw = "";
+      if (GEMINI_KEY) {
+        raw = await callGemini(buildPrompt({ ...input, count: input.count || 3 }, ch));
+        model = `Gemini ${GEMINI_MODEL}`;
+      } else if (GROQ_KEY) {
+        raw = await callGroq(buildPrompt({ ...input, count: input.count || 3 }, ch));
+        model = `Groq ${GROQ_MODEL}`;
+      }
+      rawByChannel.set(ch, raw);
     }
   } catch (e) {
     console.error("AI call failed, falling back to engine", e);
     return base;
   }
-  const parsed = parseHooks(raw);
-  if (parsed.length === 0) return base;
-
-  const byChannel = new Map<string, number>();
-  parsed.forEach((h) => byChannel.set(h.channel, (byChannel.get(h.channel) || 0) + 1));
-  const perChannel = input.count && input.count > 0 ? input.count : 3;
 
   const merged: Hook[] = [];
+  const perChannel = input.count && input.count > 0 ? input.count : 3;
   channels.forEach((ch) => {
-    const ai = parsed.filter((h) => h.channel === ch).slice(0, perChannel);
-    const engineFallback = base.hooks.filter((h) => h.channel === ch);
-    const list = ai.length > 0 ? ai : engineFallback;
+    const ai = parseHooks(rawByChannel.get(ch) || "").slice(0, perChannel);
+    const kept = ai.length > 0 ? ai : base.hooks.filter((h) => h.channel === ch);
     const label = base.hooks.find((b) => b.channel === ch)?.channelLabel || ch;
-    list.forEach((h, i) => {
+    kept.forEach((h, i) => {
       merged.push({
         ...h,
-        id: `${ch}-${i}`,
+        channel: ch,
+        id: `${ch}-${variation}-${i}`,
         channelLabel: label,
+        variation: variation > 0 ? `v${variation}` : undefined,
       });
     });
   });

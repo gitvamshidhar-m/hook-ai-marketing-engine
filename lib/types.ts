@@ -50,6 +50,17 @@ export type AnalyzeInput = {
   competitorHooks?: string[];
   channel?: Channel | "all";
   count?: number;
+  variation?: number;
+  avoidPsych?: string[];
+};
+
+export type AbTest = {
+  id: string;
+  topic: string;
+  hooks: [string, string];
+  scores: [number, number];
+  winner: 0 | 1 | -1;
+  createdAt: string;
 };
 
 export const CHANNEL_LABELS: Record<Channel, string> = {

@@ -202,17 +202,21 @@ export function generateResult(input: AnalyzeInput): AnalyzeResult {
   const angles = buildAngles(input.topic);
   const hooks: Hook[] = [];
   const count = input.count && input.count > 0 ? input.count : 3;
+  const variation = input.variation && input.variation > 0 ? input.variation : 0;
   channels.forEach((ch) => {
     const pats = PATTERNS[ch];
-    for (let i = 0; i < count && i < pats.length; i++) {
-      const text = pats[i](cap(input.topic, 5), input.audience || "marketers");
+    const shift = variation * 2;
+    for (let i = 0; i < count; i++) {
+      const idx = (shift + i) % pats.length;
+      const text = pats[idx](cap(input.topic, 5), input.audience || "marketers");
       hooks.push({
-        id: `${ch}-${i}`,
+        id: `${ch}-${variation}-${i}`,
         text,
         channel: ch,
         channelLabel: CHANNEL_LABELS[ch],
         score: scoreHook(text, input.topic),
         psychology: psychologyOf(text),
+        variation: variation > 0 ? `v${variation}` : undefined,
       });
     }
   });
