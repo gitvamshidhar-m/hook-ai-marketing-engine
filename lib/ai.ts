@@ -145,12 +145,12 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
   try {
     for (const ch of channels) {
       let raw = "";
-      if (GEMINI_KEY) {
-        raw = await callGemini(buildPrompt({ ...input, count: input.count || 3 }, ch));
-        model = `Gemini ${GEMINI_MODEL}`;
-      } else if (GROQ_KEY) {
+      if (GROQ_KEY) {
         raw = await callGroq(buildPrompt({ ...input, count: input.count || 3 }, ch));
         model = `Groq ${GROQ_MODEL}`;
+      } else if (GEMINI_KEY) {
+        raw = await callGemini(buildPrompt({ ...input, count: input.count || 3 }, ch));
+        model = `Gemini ${GEMINI_MODEL}`;
       }
       rawByChannel.set(ch, raw);
     }
