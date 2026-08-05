@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { AnalyzeResult, Hook, ImproveMode } from "@/lib/types";
+import { characterCount, fleschKincaid, readabilityLabel, exportForPlatform, logAbTest, getAbTests, clearAbTests, t, type UiLanguage } from "@/lib/aitools";
 
 type ToolState = "idle" | "loading" | "done" | "error";
 
@@ -76,7 +77,31 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
 
   const [anglesState, setAnglesState] = useState<ToolState>("idle");
   const [angles, setAngles] = useState<{ text: string; psychology: string }[]>([]);
+  const [angleFormula, setAngleFormula] = useState<"aida" | "pas" | "bab" | "4ps">("aida");
   const [copied, setCopied] = useState("");
+
+  // New feature states
+  const [landingState, setLandingState] = useState<ToolState>("idle");
+  const [landingSections, setLandingSections] = useState<{ section: string; headline: string; subheadline?: string; body?: string; cta: string }[]>([]);
+  const [personaState, setPersonaState] = useState<ToolState>("idle");
+  const [personas, setPersonas] = useState<{ name: string; demographics: string; painPoints: string[]; desires: string[]; objections: string[]; triggers: string[]; message: string }[]>([]);
+  const [seoState, setSeoState] = useState<ToolState>("idle");
+  const [seoMeta, setSeoMeta] = useState<{ title: string; description: string; ogTitle: string; ogDescription: string; keywords: string[] } | null>(null);
+  const [budgetAmount, setBudgetAmount] = useState(1000);
+  const [budgetState, setBudgetState] = useState<ToolState>("idle");
+  const [budgetAllocations, setBudgetAllocations] = useState<{ channel: string; percent: number; estimatedCpc: string; rationale: string }[]>([]);
+  const [brandSamples, setBrandSamples] = useState("");
+  const [brandState, setBrandState] = useState<ToolState>("idle");
+  const [brandVoice, setBrandVoice] = useState<{ voice: { tone: string; example: string }[]; summary: string } | null>(null);
+  const [exportData, setExportData] = useState<{ field: string; value: string }[]>([]);
+  const [exportPlatform, setExportPlatform] = useState<string>("");
+  const [abHookText, setAbHookText] = useState("");
+  const [abVariant, setAbVariant] = useState("A");
+  const [abImpressions, setAbImpressions] = useState(0);
+  const [abClicks, setAbClicks] = useState(0);
+  const [abTests, setAbTests] = useState<{ hookText: string; variant: string; impressions: number; clicks: number; ctr: number }[]>([]);
+  const [readabilityText, setReadabilityText] = useState("");
+  const [lang, setLang] = useState<UiLanguage>("en");
 
   async function copy(text: string, id: string) {
     try {
@@ -177,6 +202,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
         audience: result.audience,
         goal: result.goal,
         existing: result.hooks.map((h) => h.psychology).slice(0, 12),
+        formula: angleFormula,
       });
       setAngles(data.angles);
       setAnglesState("done");
@@ -184,6 +210,95 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
       setAnglesState("error");
       console.error(e);
     }
+  }
+
+  async function runLanding() {
+    setLandingState("loading");
+    try {
+      const data = await callTool<{ sections: { section: string; headline: string; subheadline?: string; body?: string; cta: string }[]; model: string }>({
+        tool: "landing",
+        result,
+        bestHook: sortedHooks[0],
+      });
+      setLandingSections(data.sections);
+      setLandingState("done");
+    } catch (e) {
+      setLandingState("error");
+      console.error(e);
+    }
+  }
+
+  async function runPersona() {
+    setPersonaState("loading");
+    try {
+      const data = await callTool<{ personas: { name: string; demographics: string; painPoints: string[]; desires: string[]; objections: string[]; triggers: string[]; message: string }[]; model: string }>({
+        tool: "persona",
+        result,
+      });
+      setPersonas(data.personas);
+      setPersonaState("done");
+    } catch (e) {
+      setPersonaState("error");
+      console.error(e);
+    }
+  }
+
+  async function runSeo() {
+    setSeoState("loading");
+    try {
+      const data = await callTool<{ meta: { title: string; description: string; ogTitle: string; ogDescription: string; keywords: string[] }; model: string }>({
+        tool: "seo",
+        bestHook: sortedHooks[0],
+        topic: result.topic,
+      });
+      setSeoMeta(data.meta);
+      setSeoState("done");
+    } catch (e) {
+      setSeoState("error");
+      console.error(e);
+    }
+  }
+
+  async function runBudget() {
+    setBudgetState("loading");
+    try {
+      const data = await callTool<{ allocations: { channel: string; percent: number; estimatedCpc: string; rationale: string }[]; model: string }>({
+        tool: "budget",
+        result,
+        totalBudget: budgetAmount,
+      });
+      setBudgetAllocations(data.allocations);
+      setBudgetState("done");
+    } catch (e) {
+      setBudgetState("error");
+      console.error(e);
+    }
+  }
+
+  async function runBrandVoice() {
+    setBrandState("loading");
+    try {
+      const data = await callTool<{ voice: { tone: string; example: string }[]; summary: string; model: string }>({
+        tool: "brand-voice",
+        samples: brandSamples,
+      });
+      setBrandVoice(data);
+      setBrandState("done");
+    } catch (e) {
+      setBrandState("error");
+      console.error(e);
+    }
+  }
+
+  async function runAbTest() {
+    if (!abHookText.trim()) return;
+    const ctr = abImpressions > 0 ? ((abClicks / abImpressions) * 100).toFixed(2) : "0";
+    logAbTest(`hook-${Date.now()}`, abHookText, abVariant, abImpressions, abClicks);
+    setAbTests(getAbTests());
+    setAbHookText("");
+    setAbVariant("A");
+    setAbImpressions(0);
+    setAbClicks(0);
   }
 
   const hookSelect = (
@@ -202,9 +317,20 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-zinc-500">
-        <span className="h-2 w-2 rounded-full bg-emerald-400" />
-        AI tools — each runs on the live AI provider and adds zero cost to you.
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm text-zinc-500">
+          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          AI tools — each runs on the live AI provider and adds zero cost to you.
+        </div>
+        <select
+          value={lang}
+          onChange={(e) => setLang(e.target.value as UiLanguage)}
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+        >
+          {([["en", "English"], ["es", "Español"], ["pt", "Português"], ["de", "Deutsch"], ["fr", "Français"], ["hi", "हिन्दी"], ["ja", "日本語"], ["ko", "한국어"], ["zh", "中文"], ["ar", "العربية"]] as [UiLanguage, string][]).map(([code, label]) => (
+            <option key={code} value={code}>{label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Improve + Explain */}
@@ -473,11 +599,26 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           A single brainstorm pass that avoids the psychology triggers your current hooks already use — great for
           variation testing beyond the first run.
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {(["aida", "pas", "bab", "4ps"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setAngleFormula(f)}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-medium transition ${
+                angleFormula === f
+                  ? "bg-indigo-600 text-white"
+                  : "border border-zinc-300 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-300"
+              }`}
+            >
+              {f.toUpperCase()}
+            </button>
+          ))}
+        </div>
         <div className="mt-3 flex items-center gap-3">
           <button
             onClick={runAngles}
             disabled={anglesState === "loading"}
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="ml-auto rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
           >
             Brainstorm 20
           </button>
@@ -495,6 +636,277 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </Section>
+
+      {/* ---- NEW FEATURES ---- */}
+
+      <Section title="Landing page generator" icon="📄">
+        <p className="text-xs text-zinc-500">
+          Generate a full landing page structure from your analysis — hero, features, proof, and CTA sections.
+        </p>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            onClick={runLanding}
+            disabled={landingState === "loading"}
+            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+          >
+            Generate landing page
+          </button>
+          {landingState === "loading" && <Spinner />}
+        </div>
+        {landingState === "error" && <p className="mt-3 text-sm text-red-500">Landing page generation failed — try again.</p>}
+        {landingSections.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {landingSections.map((s, i) => (
+              <div key={i} className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">{s.section}</p>
+                <p className="mt-1 font-semibold">{s.headline}</p>
+                {s.subheadline && <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-300">{s.subheadline}</p>}
+                {s.body && <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">{s.body}</p>}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">{s.cta}</span>
+                  <button onClick={() => copy(s.headline, `lp-${i}`)} className="text-xs text-zinc-400 hover:text-zinc-600">{copied === `lp-${i}` ? "Copied" : "Copy"}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Audience persona builder" icon="👤">
+        <p className="text-xs text-zinc-500">
+          Generate detailed audience personas from your topic and audience description.
+        </p>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            onClick={runPersona}
+            disabled={personaState === "loading"}
+            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+          >
+            Build personas
+          </button>
+          {personaState === "loading" && <Spinner />}
+        </div>
+        {personaState === "error" && <p className="mt-3 text-sm text-red-500">Persona builder failed — try again.</p>}
+        {personas.length > 0 && (
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {personas.map((p, i) => (
+              <div key={i} className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+                <p className="font-semibold">{p.name}</p>
+                <p className="mt-1 text-xs text-zinc-500">{p.demographics}</p>
+                <div className="mt-3 space-y-2">
+                  <div><p className="text-xs font-semibold text-red-500">Pain points</p><ul className="mt-1 list-disc list-inside text-xs space-y-1">{p.painPoints.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                  <div><p className="text-xs font-semibold text-emerald-500">Desires</p><ul className="mt-1 list-disc list-inside text-xs space-y-1">{p.desires.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                  <div><p className="text-xs font-semibold text-amber-500">Objections</p><ul className="mt-1 list-disc list-inside text-xs space-y-1">{p.objections.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                  <div><p className="text-xs font-semibold text-violet-500">Triggers</p><ul className="mt-1 list-disc list-inside text-xs space-y-1">{p.triggers.map((x) => <li key={x}>{x}</li>)}</ul></div>
+                </div>
+                {p.message && <p className="mt-3 text-xs italic text-zinc-500">"{p.message}"</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="SEO metadata generator" icon="🔍">
+        <p className="text-xs text-zinc-500">
+          Auto-generate SEO title, description, OG tags, and keywords from your best hook.
+        </p>
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            onClick={runSeo}
+            disabled={seoState === "loading"}
+            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+          >
+            Generate SEO tags
+          </button>
+          {seoState === "loading" && <Spinner />}
+        </div>
+        {seoState === "error" && <p className="mt-3 text-sm text-red-500">SEO generation failed — try again.</p>}
+        {seoMeta && (
+          <div className="mt-4 space-y-3 rounded-xl bg-zinc-50 p-4 dark:bg-zinc-800/50">
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Title tag</p><p className="mt-1 text-sm font-medium">{seoMeta.title}</p></div>
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Meta description</p><p className="mt-1 text-sm">{seoMeta.description}</p></div>
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">OG title</p><p className="mt-1 text-sm">{seoMeta.ogTitle}</p></div>
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">OG description</p><p className="mt-1 text-sm">{seoMeta.ogDescription}</p></div>
+            <div><p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Keywords</p><div className="mt-1 flex flex-wrap gap-2">{seoMeta.keywords.map((k) => <span key={k} className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">{k}</span>)}</div></div>
+          </div>
+        )}
+      </Section>
+
+      <Section title="Budget allocator" icon="💰">
+        <p className="text-xs text-zinc-500">
+          Allocate your campaign budget across channels based on your audience and goal.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="text-xs text-zinc-500">Budget:</label>
+          <input type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(Number(e.target.value) || 100)} className="w-20 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+          <button
+            onClick={runBudget}
+            disabled={budgetState === "loading"}
+            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+          >
+            Allocate
+          </button>
+          {budgetState === "loading" && <Spinner />}
+        </div>
+        {budgetState === "error" && <p className="mt-3 text-sm text-red-500">Budget allocation failed — try again.</p>}
+        {budgetAllocations.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {budgetAllocations.map((a, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <span className="w-16 shrink-0 text-xs font-semibold text-indigo-500">{a.channel}</span>
+                <div className="flex-1">
+                  <div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-800"><div className="h-2 rounded-full bg-indigo-500" style={{ width: `${a.percent}%` }} /></div>
+                  <p className="mt-1 text-xs text-zinc-500">{a.rationale}</p>
+                </div>
+                <span className="shrink-0 text-xs font-mono text-zinc-400">{a.percent}% · {a.estimatedCpc}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Brand voice trainer" icon="🎙️">
+        <p className="text-xs text-zinc-500">
+          Paste 3-5 brand voice samples (e.g. "We cut the busywork so teams ship faster.") and the AI extracts your tone attributes.
+        </p>
+        <textarea
+          value={brandSamples}
+          onChange={(e) => setBrandSamples(e.target.value)}
+          rows={3}
+          placeholder="We cut the busywork so teams ship faster. Practical skills, zero fluff, real projects. Send once, sell on autopilot."
+          className="mt-3 w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+        />
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            onClick={runBrandVoice}
+            disabled={brandState === "loading" || !brandSamples.trim()}
+            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-black"
+          >
+            Train brand voice
+          </button>
+          {brandState === "loading" && <Spinner />}
+        </div>
+        {brandState === "error" && <p className="mt-3 text-sm text-red-500">Brand voice training failed — try again.</p>}
+        {brandVoice && brandVoice.voice.length > 0 && (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm italic text-zinc-600 dark:text-zinc-300">"{brandVoice.summary}"</p>
+            <div className="flex flex-wrap gap-2">
+              {brandVoice.voice.map((v, i) => (
+                <div key={i} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                  <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">{v.tone}</span>
+                  <p className="mt-2 text-xs italic text-zinc-500">"{v.example}"</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </Section>
+
+      <Section title="Platform export" icon="📤">
+        <p className="text-xs text-zinc-500">
+          Export your hooks and ad copy in platform-ready formats.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(["google-ads", "meta", "mailchimp", "linkedin"] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => {
+                const exports = exportForPlatform(result, p);
+                setExportData(exports);
+                setExportPlatform(p);
+              }}
+              className="rounded-full border border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-600 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {p === "google-ads" ? "Google Ads" : p === "meta" ? "Meta/Facebook" : p === "mailchimp" ? "Mailchimp" : "LinkedIn"}
+            </button>
+          ))}
+        </div>
+        {exportData.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {exportData.map((e, i) => (
+              <div key={i} className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-zinc-500">{e.field}</span>
+                  <p className="text-sm font-medium truncate">{e.value}</p>
+                </div>
+                <button onClick={() => copy(e.value, `exp-${i}`)} className="shrink-0 rounded-md border border-zinc-300 px-2 py-0.5 text-xs transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800">
+                  {copied === `exp-${i}` ? "Copied" : "Copy"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="A/B test tracker" icon="⚗️">
+        <p className="text-xs text-zinc-500">
+          Log real campaign performance for your hooks and track which ones actually win.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="text-xs text-zinc-500">Hook text</label>
+            <input type="text" value={abHookText} onChange={(e) => setAbHookText(e.target.value)} placeholder="Paste your hook..." className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+          </div>
+          <div>
+            <label className="text-xs text-zinc-500">Variant</label>
+            <input type="text" value={abVariant} onChange={(e) => setAbVariant(e.target.value)} placeholder="A or B" className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+          </div>
+          <div>
+            <label className="text-xs text-zinc-500">Impressions</label>
+            <input type="number" value={abImpressions} onChange={(e) => setAbImpressions(Number(e.target.value) || 0)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+          </div>
+          <div>
+            <label className="text-xs text-zinc-500">Clicks</label>
+            <input type="number" value={abClicks} onChange={(e) => setAbClicks(Number(e.target.value) || 0)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+          </div>
+        </div>
+        <button onClick={runAbTest} className="mt-3 rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-black">Log test result</button>
+        {abTests.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Recent tests ({abTests.length})</p>
+              <button onClick={() => { clearAbTests(); setAbTests([]); }} className="text-xs text-zinc-400 hover:text-rose-500">Clear all</button>
+            </div>
+            {abTests.slice(-10).reverse().map((t, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+                <span className="flex-1 text-sm truncate">{t.hookText}</span>
+                <span className="text-xs font-mono text-emerald-500">{t.ctr}% CTR</span>
+                <span className="text-xs text-zinc-400">{t.impressions} imp · {t.clicks} clicks</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Character counter & readability" icon="📏">
+        <p className="text-xs text-zinc-500">
+          Check hook length and readability score for your target audience.
+        </p>
+        <textarea
+          value={readabilityText}
+          onChange={(e) => setReadabilityText(e.target.value)}
+          rows={2}
+          placeholder="Paste a hook or headline to check..."
+          className="mt-3 w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+        />
+        {readabilityText.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-4">
+            <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+              <p className="text-xs text-zinc-500">Characters</p>
+              <p className="text-xl font-bold">{characterCount(readabilityText)}</p>
+            </div>
+            <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+              <p className="text-xs text-zinc-500">Words</p>
+              <p className="text-xl font-bold">{readabilityText.split(/\s+/).filter(Boolean).length}</p>
+            </div>
+            <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+              <p className="text-xs text-zinc-500">Readability</p>
+              <p className="text-xl font-bold">{fleschKincaid(readabilityText).toFixed(1)}</p>
+              <p className="text-xs text-zinc-500">{readabilityLabel(fleschKincaid(readabilityText))}</p>
+            </div>
           </div>
         )}
       </Section>
