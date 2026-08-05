@@ -95,11 +95,25 @@ def test_health():
         check("health returns 200", False, f"got {e.code}")
 
 
+def test_campaign():
+    print("[campaign]")
+    status, data = call("/api/campaign", {"topic": "AI note-taking app", "budget": 500})
+    check("returns 200", status == 200, f"got {status}: {data.get('error')}")
+    check("has hooks", isinstance(data.get("hooks"), list) and len(data["hooks"]) > 0)
+    plan = data.get("plan") or {}
+    check("plan has health score", isinstance(plan.get("healthScore"), (int, float)), str(plan))
+    check("plan has budget allocations", isinstance(plan.get("budget", {}).get("allocations"), list))
+    check("plan has channel strategies", isinstance(plan.get("strategies"), list) and len(plan.get("strategies", [])) > 0)
+    check("plan has calendar", isinstance(plan.get("calendar"), list) and len(plan.get("calendar", [])) > 0)
+    check("plan has kpis", isinstance(plan.get("kpis"), list) and len(plan.get("kpis", [])) > 0)
+
+
 if __name__ == "__main__":
     test_health()
     test_analyze()
     test_analyze_invalid()
     test_ai_tools()
     test_adcopy()
+    test_campaign()
     print(f"\n=== {PASS} passed, {FAIL} failed ===")
     sys.exit(1 if FAIL else 0)

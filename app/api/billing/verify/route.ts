@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
-import { razorpayConfigured, verifyRazorpaySignature, planCredits } from "@/lib/razorpay";
+import { razorpayConfigured, verifyRazorpaySignature, planCredits, planAmount } from "@/lib/razorpay";
 import { addCredits } from "@/lib/credits";
 
 export const runtime = "nodejs";
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   await supabase.from("payments").insert({
     user_id: user.id,
     razorpay_order_id: orderId,
-    amount_paise: 0,
+    amount_paise: planAmount(plan),
     credits: planCredits(plan),
     status: "completed",
   });

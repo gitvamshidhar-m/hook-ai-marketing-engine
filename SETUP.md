@@ -21,6 +21,13 @@ Verify it worked:
 - Left sidebar → **Table Editor** → you should see `profiles`, `projects`, `community_hooks`, `payments` listed.
 - Left sidebar → **Database** → **Functions** → you should see `spend_credit`.
 
+### Part 1b — Run schema v2 (analytics, share links, referrals, admin)
+Run the second migration so the newer features work:
+1. In **SQL Editor → + New query**, paste the entire contents of `supabase/schema_v2.sql`.
+2. Click **Run**.
+3. This creates `hook_ai_stats`, `shares`, `referrals`, adds `role` + `ref_code` to `profiles`, and the `add_credits`, `is_admin`, `admin_*` functions.
+4. It also promotes `gitvamshidhar@gmail.com` to **admin** — if your account email differs, change that line before running.
+
 ---
 
 ## Part 2 — Supabase: enable email auth (2 min)
@@ -86,6 +93,9 @@ Credits are granted immediately after Razorpay's **client-side signature verific
    - Card number: `4111 1111 1111 1111`
    - Expiry: any future date, CVV: any 3 digits, OTP: `1234` (or any)
 7. After payment, the modal should refresh and credits jump by 50 immediately.
+8. **Campaign Studio** — open `/campaign`, enter a product, click **Generate full campaign plan**. You get a health score, budget split, channel strategy, content calendar, and KPIs. Click **Publish campaign link** to get a shareable `/s/<slug>` URL.
+9. **Admin** — sign in as the admin account → click **Admin** in the nav → see platform stats and moderate the community feed.
+10. **Referral** — open the account modal → copy your referral link → sign up with a second email using `?ref=<code>` → both accounts get +5 credits.
 
 ---
 
@@ -107,8 +117,13 @@ Credits are granted immediately after Razorpay's **client-side signature verific
 
 | Table | Purpose |
 |---|---|
-| `profiles` | User email/name + credit balance (10 free on signup). |
+| `profiles` | User email/name + credit balance (10 free on signup). Has `role` (`user`/`admin`) and `ref_code` (referral). |
 | `projects` | Per-user saved campaigns (RLS: users only see their own). |
 | `community_hooks` | Anonymized top hooks shown on `/community`. |
 | `payments` | Ledger of Razorpay orders (each credits granted). |
+| `hook_ai_stats` | One row per run — feeds `/analytics` (topic, hooks, best score, health score). |
+| `shares` | Persisted `/s/<slug>` campaign links (public, recruiter-clickable). |
+| `referrals` | Referrer → referred mapping + bonus credits granted. |
 | `spend_credit(user_id)` | Atomic credit decrement (avoids race conditions). |
+| `add_credits(user, n)` | Security-definer credit grant (referrals + admin). |
+| `is_admin()` / `admin_*()` | Role-gated admin reads/moderation (no service key needed). |

@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { getAccount } from "@/lib/account";
 import { useAuth } from "./AuthProvider";
 import AuthModal from "./AuthModal";
 
 export default function NavBar() {
   const { user, profile, loading } = useAuth();
-  const [name] = useState(() => getAccount().name);
   const [authOpen, setAuthOpen] = useState(false);
 
   return (
@@ -47,6 +45,20 @@ export default function NavBar() {
             >
               My campaigns
             </Link>
+            <Link
+              href="/campaign"
+              className="rounded-lg px-3 py-1.5 font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950"
+            >
+              Campaign Studio
+            </Link>
+            {profile?.role === "admin" && (
+              <Link
+                href="/admin"
+                className="rounded-lg px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+              >
+                Admin
+              </Link>
+            )}
             {user ? (
               <button
                 onClick={() => setAuthOpen(true)}
@@ -72,7 +84,7 @@ export default function NavBar() {
           </span>
         </nav>
       </header>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      {authOpen && <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />}
     </>
   );
 }

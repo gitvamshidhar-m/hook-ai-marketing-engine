@@ -13,13 +13,15 @@ export default function AuthModal({
   onClose: () => void;
 }) {
   const { user, profile, login, signup, logout, refresh } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("signup");
+  const [mode, setMode] = useState<"login" | "signup">(() => (user ? "login" : "signup"));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [upgrade, setUpgrade] = useState<UpgradeState>("idle");
+  const [referral, setReferral] = useState<{ code: string; url: string; referredCount: number; creditsEarned: number } | null>(null);
+  const [refCopied, setRefCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   async function checkout(plan: "starter" | "pro") {
@@ -84,11 +86,29 @@ export default function AuthModal({
   }
 
   useEffect(() => {
-    if (open) {
-      setError("");
-      if (user) setMode("login");
+    if (!user) return;
+    let active = true;
+    fetch("/api/referral")
+      .then((r) => r.json())
+      .then((d) => {
+        if (active && d && d.code) setReferral(d);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  async function copyRef() {
+    if (!referral) return;
+    try {
+      await navigator.clipboard.writeText(referral.url);
+      setRefCopied(true);
+      setTimeout(() => setRefCopied(false), 2000);
+    } catch {
+      /* clipboard unavailable */
     }
-  }, [open, user]);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -105,7 +125,9 @@ export default function AuthModal({
     setBusy(true);
     try {
       if (mode === "signup") {
-        await signup(email, password, name);
+        const refParam =
+          typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("ref") || undefined : undefined;
+        await signup(email, password, name, refParam);
       } else {
         await login(email, password);
       }
@@ -173,6 +195,32 @@ export default function AuthModal({
               {upgrade === "busy" && <p className="mt-2 text-xs text-zinc-500">Opening secure checkout…</p>}
               {upgrade === "error" && <p className="mt-2 text-xs text-amber-600">{error}</p>}
             </div>
+
+            {referral && (
+              <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900 dark:bg-indigo-950/40">
+                <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-200">Refer & earn +5 credits</p>
+                <p className="mt-1 text-xs text-indigo-700/80 dark:text-indigo-300/80">
+                  Share your link — when a friend signs up, you both get 5 credits.
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={referral.url}
+                    onFocus={(e) => e.target.select()}
+                    className="w-full rounded-lg border border-indigo-200 bg-white px-2.5 py-1.5 text-xs text-indigo-700 focus:outline-none dark:border-indigo-800 dark:bg-zinc-950 dark:text-indigo-300"
+                  />
+                  <button
+                    onClick={copyRef}
+                    className="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-500"
+                  >
+                    {refCopied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] text-indigo-600/80 dark:text-indigo-300/70">
+                  {referral.referredCount} friend{referral.referredCount === 1 ? "" : "s"} joined · {referral.creditsEarned} credits earned
+                </p>
+              </div>
+            )}
 
             <button
               onClick={async () => { await logout(); onClose(); }}

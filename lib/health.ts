@@ -1,6 +1,5 @@
 import type { AnalyzeResult } from "./types";
 import { computeCoverage } from "./analytics";
-import { classifyHook } from "./psych";
 
 export type HealthFactor = {
   id: string;

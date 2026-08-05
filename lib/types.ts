@@ -71,6 +71,7 @@ export type AnalyzeResult = {
   language?: string;
   keywords?: KeywordRow[];
   aiDebug?: string;
+  plan?: CampaignPlan;
 };
 
 export type KeywordRow = {
@@ -181,6 +182,47 @@ export type AbTest = {
   scores: [number, number];
   winner: 0 | 1 | -1;
   createdAt: string;
+};
+
+export type BudgetAllocation = {
+  channel: Channel;
+  label: string;
+  percent: number;
+  amount: number;
+};
+
+export type ChannelStrategy = {
+  channel: Channel;
+  label: string;
+  role: string;
+  bestHook: string;
+  recommendation: string;
+};
+
+export type ContentCalendarItem = {
+  day: number;
+  channel: Channel;
+  label: string;
+  idea: string;
+};
+
+export type Kpi = {
+  metric: string;
+  target: string;
+  note: string;
+};
+
+export type CampaignPlan = {
+  healthScore: number;
+  healthGrade: string;
+  budget: { total: number; allocations: BudgetAllocation[] };
+  strategies: ChannelStrategy[];
+  funnel: { stage: string; label: string; share: number }[];
+  targeting: { meta: string[]; tiktok: string[]; google: string[]; note: string };
+  calendar: ContentCalendarItem[];
+  testing: { step: number; hook: string; strategy: string; minClicks: number; durationDays: number }[];
+  demand: { demand: number; trend: string; peakMonths: string[]; note: string };
+  kpis: Kpi[];
 };
 
 export const CHANNEL_LABELS: Record<Channel, string> = {

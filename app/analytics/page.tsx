@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabaseConfigured, recordRun } from "@/lib/supabase";
+import { supabaseConfigured } from "@/lib/supabase";
 
 type StatRow = {
   topic: string;
   hooks: number;
   best_score: number;
   ai_powered: boolean;
+  health_score: number | null;
   created_at: string;
 };
 
@@ -27,7 +28,7 @@ export default function AnalyticsPage() {
         const URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
         const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
         const res = await fetch(
-          `${URL}/rest/v1/hook_ai_stats?select=topic,hooks,best_score,ai_powered,created_at&order=created_at.desc&limit=100`,
+          `${URL}/rest/v1/hook_ai_stats?select=topic,hooks,best_score,ai_powered,health_score,created_at&order=created_at.desc&limit=200`,
           {
             headers: {
               apikey: KEY,
@@ -55,6 +56,18 @@ export default function AnalyticsPage() {
     totalRuns > 0
       ? Math.round(stats.reduce((a, s) => a + s.best_score, 0) / totalRuns)
       : 0;
+  const scored = stats.filter((s) => typeof s.health_score === "number");
+  const avgHealth =
+    scored.length > 0
+      ? Math.round(scored.reduce((a, s) => a + (s.health_score as number), 0) / scored.length)
+      : 0;
+  const last14 = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    const key = d.toISOString().slice(0, 10);
+    return { day: key.slice(5), runs: stats.filter((s) => s.created_at.slice(0, 10) === key).length };
+  });
+  const maxDay = Math.max(1, ...last14.map((d) => d.runs));
   const topTopics = Object.entries(
     stats.reduce<Record<string, number>>((acc, s) => {
       acc[s.topic] = (acc[s.topic] || 0) + 1;
@@ -102,7 +115,31 @@ export default function AnalyticsPage() {
                 <p className="text-xs uppercase tracking-wide text-zinc-500">Avg best score</p>
                 <p className="mt-1 text-3xl font-bold">{avgScore}</p>
               </div>
+              <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <p className="text-xs uppercase tracking-wide text-zinc-500">Avg health score</p>
+                <p className="mt-1 text-3xl font-bold">{avgHealth || "—"}</p>
+              </div>
             </div>
+
+            {last14.some((d) => d.runs > 0) && (
+              <div className="card-elevated mt-8 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Runs · last 14 days</h2>
+                <div className="mt-4 flex h-24 items-end gap-1.5">
+                  {last14.map((d) => (
+                    <div key={d.day} className="group relative flex-1" title={`${d.day}: ${d.runs} run${d.runs === 1 ? "" : "s"}`}>
+                      <div
+                        className="bg-gradient-brand w-full rounded-t transition-all hover:brightness-110"
+                        style={{ height: `${Math.max(4, (d.runs / maxDay) * 100)}%` }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 flex justify-between text-[10px] text-zinc-400">
+                  <span>{last14[0].day}</span>
+                  <span>{last14[last14.length - 1].day}</span>
+                </div>
+              </div>
+            )}
 
             {topTopics.length > 0 && (
               <div className="card-elevated mt-8 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
@@ -130,6 +167,7 @@ export default function AnalyticsPage() {
                       <th className="px-4 py-3">Topic</th>
                       <th className="px-4 py-3">Hooks</th>
                       <th className="px-4 py-3">Best score</th>
+                      <th className="px-4 py-3">Health</th>
                       <th className="px-4 py-3">AI</th>
                       <th className="px-4 py-3">Date</th>
                     </tr>
@@ -143,6 +181,15 @@ export default function AnalyticsPage() {
                         <td className="px-4 py-3 font-medium">{s.topic}</td>
                         <td className="px-4 py-3">{s.hooks}</td>
                         <td className="px-4 py-3 font-semibold text-emerald-600 dark:text-emerald-400">{s.best_score}</td>
+                        <td className="px-4 py-3">
+                          {typeof s.health_score === "number" ? (
+                            <span className={`font-semibold ${s.health_score >= 70 ? "text-emerald-600 dark:text-emerald-400" : s.health_score >= 55 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
+                              {s.health_score}
+                            </span>
+                          ) : (
+                            <span className="text-zinc-400">—</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           {s.ai_powered ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">

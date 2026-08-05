@@ -705,7 +705,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
                   <div><p className="text-xs font-semibold text-amber-500">Objections</p><ul className="mt-1 list-disc list-inside text-xs space-y-1">{p.objections.map((x) => <li key={x}>{x}</li>)}</ul></div>
                   <div><p className="text-xs font-semibold text-violet-500">Triggers</p><ul className="mt-1 list-disc list-inside text-xs space-y-1">{p.triggers.map((x) => <li key={x}>{x}</li>)}</ul></div>
                 </div>
-                {p.message && <p className="mt-3 text-xs italic text-zinc-500">"{p.message}"</p>}
+                {p.message && <p className="mt-3 text-xs italic text-zinc-500">&quot;{p.message}&quot;</p>}
               </div>
             ))}
           </div>
@@ -773,7 +773,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
 
       <Section title="Brand voice trainer" icon="🎙️">
         <p className="text-xs text-zinc-500">
-          Paste 3-5 brand voice samples (e.g. "We cut the busywork so teams ship faster.") and the AI extracts your tone attributes.
+          Paste 3-5 brand voice samples (e.g. &quot;We cut the busywork so teams ship faster.&quot;) and the AI extracts your tone attributes.
         </p>
         <textarea
           value={brandSamples}
@@ -795,12 +795,12 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
         {brandState === "error" && <p className="mt-3 text-sm text-red-500">Brand voice training failed — try again.</p>}
         {brandVoice && brandVoice.voice.length > 0 && (
           <div className="mt-4 space-y-3">
-            <p className="text-sm italic text-zinc-600 dark:text-zinc-300">"{brandVoice.summary}"</p>
+            <p className="text-sm italic text-zinc-600 dark:text-zinc-300">&quot;{brandVoice.summary}&quot;</p>
             <div className="flex flex-wrap gap-2">
               {brandVoice.voice.map((v, i) => (
                 <div key={i} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
                   <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">{v.tone}</span>
-                  <p className="mt-2 text-xs italic text-zinc-500">"{v.example}"</p>
+                  <p className="mt-2 text-xs italic text-zinc-500">&quot;{v.example}&quot;</p>
                 </div>
               ))}
             </div>

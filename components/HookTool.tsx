@@ -7,6 +7,8 @@ import ResultView from "./ResultView";
 import Dashboard from "./Dashboard";
 import TemplateGallery from "./TemplateGallery";
 import { recordRun, supabaseConfigured } from "@/lib/supabase";
+import { useAuth } from "./AuthProvider";
+import { computeHealthScore } from "@/lib/health";
 import { bonusRunsToday } from "@/lib/referral";
 import { competitorHooksFromCSV, readFileAsText } from "@/lib/csv";
 
@@ -22,6 +24,7 @@ const PROGRESS_STEPS = [
 ];
 
 export default function HookTool() {
+  const { user } = useAuth();
   const [topic, setTopic] = useState("");
   const [audience, setAudience] = useState("");
   const [goal, setGoal] = useState("");
@@ -128,7 +131,7 @@ export default function HookTool() {
       setVariation(variationSeed);
       if (variationSeed === 0) {
         bumpUsed();
-        recordRun(statsPayload(data));
+        recordRun({ ...statsPayload(data), healthScore: computeHealthScore(data).score, userId: user?.id || undefined });
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error.");

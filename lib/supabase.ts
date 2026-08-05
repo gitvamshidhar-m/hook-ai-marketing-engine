@@ -8,6 +8,8 @@ export async function recordRun(payload: {
   hooks: number;
   bestScore: number;
   aiPowered: boolean;
+  healthScore?: number;
+  userId?: string;
   topHooks?: { text: string; score: number; channel?: string; psychology?: string }[];
 }): Promise<void> {
   if (!supabaseConfigured) return;
@@ -21,10 +23,12 @@ export async function recordRun(payload: {
         Prefer: "return=minimal",
       },
       body: JSON.stringify({
+        user_id: payload.userId || null,
         topic: payload.topic.slice(0, 120),
         hooks: payload.hooks,
         best_score: payload.bestScore,
         ai_powered: payload.aiPowered,
+        health_score: payload.healthScore ?? null,
         created_at: new Date().toISOString(),
       }),
     });

@@ -3,14 +3,14 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 type User = { id: string; email: string };
-type Profile = { id: string; email: string; name: string; credits: number };
+type Profile = { id: string; email: string; name: string; credits: number; role?: string; ref_code?: string };
 
 type AuthContextValue = {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
   refresh: () => Promise<void>;
-  signup: (email: string, password: string, name?: string) => Promise<void>;
+  signup: (email: string, password: string, name?: string, ref?: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -37,15 +37,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let active = true;
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        setUser(data.user || null);
+        setProfile(data.profile || null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setUser(null);
+        setProfile(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const signup = useCallback(
-    async (email: string, password: string, name?: string) => {
+    async (email: string, password: string, name?: string, ref?: string) => {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, ref }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Sign up failed.");
