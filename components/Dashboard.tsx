@@ -76,34 +76,34 @@ export default function Dashboard({ result }: { result: AnalyzeResult | null }) 
 
   return (
     <section className="mx-auto mt-10 w-full max-w-6xl px-4">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Your live dashboard</h2>
           <span className="text-xs text-zinc-400">stored in your browser · resets on clear</span>
         </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {cards.map((c) => (
-            <div key={c.label} className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-950">
-              <p className="text-xs text-zinc-500">{c.label}</p>
-              <p className="mt-1 flex items-center gap-1.5 text-2xl font-bold">
-                {c.value}
+            <div key={c.label} className="rounded-xl border border-zinc-200 bg-zinc-50/70 p-4 transition hover:border-indigo-200 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-indigo-800">
+              <p className="text-xs font-medium text-zinc-500">{c.label}</p>
+              <p className="mt-1 flex items-center gap-1.5 text-2xl font-bold tracking-tight">
+                <span className="text-gradient">{String(c.value)}</span>
                 {c.icon && <span className="text-xl" aria-hidden>{c.icon}</span>}
               </p>
-              <p className="text-xs text-zinc-400">{c.hint}</p>
+              <p className="mt-0.5 text-xs text-zinc-400">{c.hint}</p>
             </div>
           ))}
         </div>
         {merged.lastBestText ? (
-          <p className="mt-4 rounded-lg bg-indigo-50 px-3 py-2 text-sm text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+          <p className="mt-5 rounded-xl bg-gradient-soft px-4 py-3 text-sm font-medium text-indigo-700 dark:text-indigo-300">
             Highest-scoring hook: “{merged.lastBestText}” — {merged.best}/100
           </p>
         ) : null}
         {merged.recent.length > 0 && (
-          <div className="mt-4">
+          <div className="mt-5">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Recent topics (session memory)</h3>
-            <ul className="mt-2 flex flex-wrap gap-2">
+            <ul className="mt-2.5 flex flex-wrap gap-2">
               {merged.recent.slice(0, 5).map((t) => (
-                <li key={t} className="rounded-full border border-zinc-200 px-3 py-1 text-xs text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
+                <li key={t} className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 transition hover:border-indigo-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-indigo-800">
                   {t}
                 </li>
               ))}

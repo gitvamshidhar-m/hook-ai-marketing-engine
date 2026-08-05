@@ -34,9 +34,12 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-      <h3 className="flex items-center gap-2 font-semibold">
-        <span>{icon}</span> {title}
+    <section className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 transition hover:border-indigo-200 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-indigo-800 sm:p-6">
+      <h3 className="flex items-center gap-2.5 font-semibold">
+        <span className="bg-gradient-soft flex h-8 w-8 items-center justify-center rounded-lg text-base" aria-hidden>
+          {icon}
+        </span>
+        {title}
       </h3>
       <div className="mt-4">{children}</div>
     </section>
@@ -316,16 +319,16 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-zinc-50/60 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/40">
         <div className="flex items-center gap-2 text-sm text-zinc-500">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
           AI tools — each runs on the live AI provider and adds zero cost to you.
         </div>
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value as UiLanguage)}
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+          className="rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-950"
         >
           {([["en", "English"], ["es", "Español"], ["pt", "Português"], ["de", "Deutsch"], ["fr", "Français"], ["hi", "हिन्दी"], ["ja", "日本語"], ["ko", "한국어"], ["zh", "中文"], ["ar", "العربية"]] as [UiLanguage, string][]).map(([code, label]) => (
             <option key={code} value={code}>{label}</option>

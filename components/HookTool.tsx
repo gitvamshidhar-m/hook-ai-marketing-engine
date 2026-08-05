@@ -150,85 +150,91 @@ export default function HookTool() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
       <TemplateGallery onLoad={(v) => { setTopic(v.topic); setAudience(v.audience); setGoal(v.goal); setCompetitors(v.competitors); setVoiceSamples(v.voice); setLanguage(v.language); }} />
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <span className="text-xs text-zinc-500">
-            Free plan · {remaining}/{FREE_DAILY} runs today{bonusToday > 0 ? ` (+${bonusToday} from sharing)` : ""}
-            {supabaseConfigured ? "" : " (trying harder is unlimited)"}
+      <section className="card-elevated rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 sm:p-8">
+        <div className="mb-6 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500">
+            <span className="h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
+            Free plan · {remaining}/{FREE_DAILY} runs today
+            {bonusToday > 0 ? <span className="text-emerald-500">(+{bonusToday} from sharing)</span> : ""}
+            {supabaseConfigured ? "" : " · trying harder is unlimited"}
           </span>
-          <button
-            onClick={reset}
-            className="text-xs text-zinc-400 underline-offset-2 hover:underline"
-          >
-            New topic
-          </button>
+          {result && (
+            <button
+              onClick={reset}
+              className="rounded-lg border border-zinc-300 px-3 py-1 text-xs text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+            >
+              New topic
+            </button>
+          )}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Topic / product / niche</span>
+            <span className="mb-1.5 block text-sm font-medium">Topic / product / niche</span>
             <input
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="e.g. organic skincare for busy moms"
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+              className="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-950"
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Audience</span>
+            <span className="mb-1.5 block text-sm font-medium">Audience</span>
             <input
               value={audience}
               onChange={(e) => setAudience(e.target.value)}
               placeholder="e.g. time-crunched parents, 25-40"
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+              className="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-950"
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Goal</span>
+            <span className="mb-1.5 block text-sm font-medium">Goal</span>
             <input
               value={goal}
               onChange={(e) => setGoal(e.target.value)}
               placeholder="e.g. drive signups to a free email course"
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+              className="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-950"
             />
           </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Channel</span>
-            <select
-              value={channel}
-              onChange={(e) => setChannel(e.target.value as Channel | "all")}
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
-            >
-              <option value="all">All channels</option>
-              {CHANNEL_ORDER.map((c) => (
-                <option key={c} value={c}>
-                  {CHANNEL_LABELS[c]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Language</span>
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">Channel</span>
+              <select
+                value={channel}
+                onChange={(e) => setChannel(e.target.value as Channel | "all")}
+                className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-950"
+              >
+                <option value="all">All channels</option>
+                {CHANNEL_ORDER.map((c) => (
+                  <option key={c} value={c}>
+                    {CHANNEL_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">Language</span>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-950"
+              >
+                {LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
         <button
           type="button"
           onClick={() => setAdvancedOpen((o) => !o)}
-          className="mt-4 flex items-center gap-1 text-sm font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400"
+          className="mt-5 flex items-center gap-1.5 text-sm font-medium text-indigo-600 transition hover:text-indigo-500 dark:text-indigo-400"
           aria-expanded={advancedOpen}
         >
           <span
-            className={`inline-block transition-transform ${advancedOpen ? "rotate-90" : ""}`}
+            className={`inline-flex h-5 w-5 items-center justify-center rounded-md border border-indigo-200 text-[10px] transition-transform dark:border-indigo-900 ${advancedOpen ? "rotate-90" : ""}`}
             aria-hidden
           >
             ▸
@@ -236,9 +242,9 @@ export default function HookTool() {
           Advanced options (competitor scan, brand voice)
         </button>
         {advancedOpen && (
-          <div className="mt-3 space-y-4 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+          <div className="mt-4 space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40 sm:p-5">
             <label className="block">
-              <span className="mb-1 block text-sm font-medium">
+              <span className="mb-1.5 block text-sm font-medium">
                 Competitor headlines / ad copy (one per line) — feeds the gap scanner
               </span>
               <textarea
@@ -246,11 +252,11 @@ export default function HookTool() {
                 onChange={(e) => setCompetitors(e.target.value)}
                 rows={2}
                 placeholder={"Why your skincare routine isn't working\n10 anti-aging secrets dermatologists hate"}
-                className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+                className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-950"
               />
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium">
+              <span className="mb-1.5 block text-sm font-medium">
                 Brand voice samples (optional) — paste 2–4 lines of existing copy to match their tone
               </span>
               <textarea
@@ -258,21 +264,22 @@ export default function HookTool() {
                 onChange={(e) => setVoiceSamples(e.target.value)}
                 rows={2}
                 placeholder={"We make healthy easy for busy families.\nResults you can feel in 30 days.\nHonest, no-nonsense skincare."}
-                className="w-full resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-950"
+                className="w-full resize-none rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm shadow-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-950"
               />
             </label>
           </div>
         )}
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-6 flex items-center gap-4">
           <button
             onClick={() => run(0, [])}
             disabled={loading}
-            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="bg-gradient-brand rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Analyzing…" : "Generate hooks"}
           </button>
           {loading && (
-            <p className="text-sm text-zinc-500" role="status" aria-live="polite">
+            <p className="flex items-center gap-2 text-sm text-zinc-500" role="status" aria-live="polite">
+              <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-indigo-500" />
               {PROGRESS_STEPS[progressStep]}
             </p>
           )}
@@ -285,11 +292,11 @@ export default function HookTool() {
       </section>
 
       {loading && !result && (
-        <div className="mt-8 animate-pulse" aria-hidden>
-          <div className="h-5 w-48 rounded bg-zinc-200 dark:bg-zinc-800" />
+        <div className="mt-8" aria-hidden>
+          <div className="shimmer h-5 w-48 rounded-full" />
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-32 rounded-2xl bg-zinc-100 dark:bg-zinc-900" />
+              <div key={i} className="shimmer h-32 rounded-2xl" />
             ))}
           </div>
         </div>
