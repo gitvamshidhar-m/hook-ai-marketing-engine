@@ -82,13 +82,12 @@ create policy "community_hooks_public_read" on public.community_hooks
 create policy "community_hooks_anon_insert" on public.community_hooks
   for insert to anon with check (true);
 
--- 5. Payments ledger (Stripe webhooks)
+-- 5. Payments ledger (Razorpay orders)
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users(id) on delete cascade,
-  stripe_checkout_id text,
-  stripe_event_id text unique,
-  amount_cents integer not null default 0,
+  razorpay_order_id text,
+  amount_paise integer not null default 0,
   credits integer not null default 0,
   status text not null default 'pending',
   created_at timestamptz not null default now()

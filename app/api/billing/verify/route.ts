@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
   await addCredits(user.id, planCredits(plan));
   await supabase.from("payments").insert({
     user_id: user.id,
-    stripe_checkout_id: orderId,
-    amount_cents: 0,
+    razorpay_order_id: orderId,
+    amount_paise: 0,
     credits: planCredits(plan),
     status: "completed",
   });
