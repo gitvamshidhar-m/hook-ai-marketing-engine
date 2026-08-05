@@ -12,7 +12,7 @@ export default function IntelligencePanel({ result }: { result: AnalyzeResult })
   return (
     <div className="mt-5 space-y-5">
       {/* Coverage meter */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between gap-2">
           <div>
             <h3 className="font-semibold">Angle coverage meter</h3>
@@ -50,7 +50,7 @@ export default function IntelligencePanel({ result }: { result: AnalyzeResult })
       </div>
 
       {/* Heatmap */}
-      <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
         <h3 className="font-semibold">Competitor angle heatmap</h3>
         <p className="mt-1 text-sm text-zinc-500">
           Where your competitors cluster (●) vs where you&apos;re free to play (○). The blue-ocean angles are your best openings.
@@ -60,11 +60,11 @@ export default function IntelligencePanel({ result }: { result: AnalyzeResult })
             const mine = cov.perAngle[c.id] > 0;
             const theirs = competitorUsed(c.id);
             return (
-              <div key={c.id} className="flex items-center gap-3 rounded-lg border border-zinc-100 p-3 dark:border-zinc-800">
+              <div key={c.id} className="flex items-center gap-3 rounded-xl border border-zinc-100 p-3 transition hover:border-indigo-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:border-indigo-900 dark:hover:bg-zinc-950">
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${
                     mine
-                      ? "bg-indigo-600 text-white"
+                      ? "bg-gradient-brand text-white"
                       : theirs
                         ? "bg-amber-500/20 text-amber-700 dark:text-amber-300"
                         : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"

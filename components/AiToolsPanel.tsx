@@ -308,7 +308,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
     <select
       value={improveHook.id}
       onChange={(e) => setImproveHook(sortedHooks.find((h) => h.id === e.target.value) || sortedHooks[0])}
-      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+      className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40"
     >
       {sortedHooks.map((h) => (
         <option key={h.id} value={h.id}>
@@ -357,7 +357,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           <button
             onClick={runImprove}
             disabled={improveState === "loading"}
-            className="ml-auto rounded-full bg-zinc-900 px-4 py-1 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand ml-auto rounded-full px-4 py-1 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Rewrite
           </button>
@@ -394,7 +394,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           <button
             onClick={runExplain}
             disabled={explainState === "loading"}
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Explain it
           </button>
@@ -429,13 +429,13 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           onChange={(e) => setReviews(e.target.value)}
           rows={4}
           placeholder={"Example:\n\"I was so embarrassed the plumber had to fix what my DIY attempt broke.\"\n\"Finally a routine that takes 10 minutes — my skin has never looked better.\""}
-          className="mt-3 w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+          className="mt-3 w-full rounded-xl border border-zinc-300 bg-white p-3 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40"
         />
         <div className="mt-3 flex items-center gap-3">
           <button
             onClick={runVoc}
             disabled={vocState === "loading" || !reviews.trim()}
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-50"
           >
             Mine the voice
           </button>
@@ -509,7 +509,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           <button
             onClick={runEmails}
             disabled={emailState === "loading"}
-            className="ml-auto rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand ml-auto rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Generate sequence
           </button>
@@ -567,7 +567,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           <button
             onClick={runCalendar}
             disabled={calState === "loading"}
-            className="ml-auto rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand ml-auto rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Build calendar
           </button>
@@ -621,7 +621,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           <button
             onClick={runAngles}
             disabled={anglesState === "loading"}
-            className="ml-auto rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand ml-auto rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Brainstorm 20
           </button>
@@ -653,7 +653,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           <button
             onClick={runLanding}
             disabled={landingState === "loading"}
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Generate landing page
           </button>
@@ -686,7 +686,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           <button
             onClick={runPersona}
             disabled={personaState === "loading"}
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Build personas
           </button>
@@ -720,7 +720,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           <button
             onClick={runSeo}
             disabled={seoState === "loading"}
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Generate SEO tags
           </button>
@@ -744,11 +744,11 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="text-xs text-zinc-500">Budget:</label>
-          <input type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(Number(e.target.value) || 100)} className="w-20 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+          <input type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(Number(e.target.value) || 100)} className="w-20 rounded-xl border border-zinc-300 bg-white px-2 py-1 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40" />
           <button
             onClick={runBudget}
             disabled={budgetState === "loading"}
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             Allocate
           </button>
@@ -780,13 +780,13 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           onChange={(e) => setBrandSamples(e.target.value)}
           rows={3}
           placeholder="We cut the busywork so teams ship faster. Practical skills, zero fluff, real projects. Send once, sell on autopilot."
-          className="mt-3 w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+          className="mt-3 w-full rounded-xl border border-zinc-300 bg-white p-3 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40"
         />
         <div className="mt-3 flex items-center gap-3">
           <button
             onClick={runBrandVoice}
             disabled={brandState === "loading" || !brandSamples.trim()}
-            className="rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-black"
+            className="bg-gradient-brand rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-50"
           >
             Train brand voice
           </button>
@@ -851,22 +851,22 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div>
             <label className="text-xs text-zinc-500">Hook text</label>
-            <input type="text" value={abHookText} onChange={(e) => setAbHookText(e.target.value)} placeholder="Paste your hook..." className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+            <input type="text" value={abHookText} onChange={(e) => setAbHookText(e.target.value)} placeholder="Paste your hook..." className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40" />
           </div>
           <div>
             <label className="text-xs text-zinc-500">Variant</label>
-            <input type="text" value={abVariant} onChange={(e) => setAbVariant(e.target.value)} placeholder="A or B" className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+            <input type="text" value={abVariant} onChange={(e) => setAbVariant(e.target.value)} placeholder="A or B" className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40" />
           </div>
           <div>
             <label className="text-xs text-zinc-500">Impressions</label>
-            <input type="number" value={abImpressions} onChange={(e) => setAbImpressions(Number(e.target.value) || 0)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+            <input type="number" value={abImpressions} onChange={(e) => setAbImpressions(Number(e.target.value) || 0)} className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40" />
           </div>
           <div>
             <label className="text-xs text-zinc-500">Clicks</label>
-            <input type="number" value={abClicks} onChange={(e) => setAbClicks(Number(e.target.value) || 0)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900" />
+            <input type="number" value={abClicks} onChange={(e) => setAbClicks(Number(e.target.value) || 0)} className="mt-1 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40" />
           </div>
         </div>
-        <button onClick={runAbTest} className="mt-3 rounded-full bg-zinc-900 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 dark:bg-zinc-100 dark:text-black">Log test result</button>
+        <button onClick={runAbTest} className="bg-gradient-brand mt-3 rounded-full px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110">Log test result</button>
         {abTests.length > 0 && (
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between">
@@ -893,7 +893,7 @@ export default function AiToolsPanel({ result }: { result: AnalyzeResult }) {
           onChange={(e) => setReadabilityText(e.target.value)}
           rows={2}
           placeholder="Paste a hook or headline to check..."
-          className="mt-3 w-full rounded-lg border border-zinc-300 bg-white p-3 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+          className="mt-3 w-full rounded-xl border border-zinc-300 bg-white p-3 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900/40"
         />
         {readabilityText.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-4">
