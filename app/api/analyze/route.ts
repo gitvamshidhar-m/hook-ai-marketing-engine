@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAiResult, hasAi } from "@/lib/ai";
 import { generateResult } from "@/lib/engine";
+import { spendCredit } from "@/lib/credits";
+import { rateLimited } from "@/lib/ratelimit";
 import type { AnalyzeInput } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimited(req);
+  if (limited) return limited;
+
   let body: AnalyzeInput;
   try {
     body = await req.json();
@@ -51,7 +56,9 @@ export async function POST(req: NextRequest) {
   }
   try {
     const result = await generateAiResult(input);
-    return NextResponse.json(result);
+    // Spend a credit only on a successful AI run; anonymous users run free.
+    const spent = await spendCredit();
+    return NextResponse.json(spent.ok ? { ...result, creditsRemaining: spent.remaining } : result);
   } catch (e) {
     console.error("[analyze] generateAiResult failed:", e);
     return NextResponse.json(generateResult(input));

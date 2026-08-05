@@ -81,6 +81,12 @@ export default function HookTool() {
       hooks: best.hooks.length,
       bestScore: top ? top.score : 0,
       aiPowered: best.aiPowered,
+      topHooks: best.hooks.map((h) => ({
+        text: h.text,
+        score: h.score,
+        channel: h.channel,
+        psychology: h.psychology,
+      })),
     };
   }
 

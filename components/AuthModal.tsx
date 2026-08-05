@@ -1,0 +1,142 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "./AuthProvider";
+
+export default function AuthModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { user, profile, login, signup, logout } = useAuth();
+  const [mode, setMode] = useState<"login" | "signup">("signup");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setError("");
+      if (user) setMode("login");
+    }
+  }, [open, user]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setBusy(true);
+    try {
+      if (mode === "signup") {
+        await signup(email, password, name);
+      } else {
+        await login(email, password);
+      }
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 p-4 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        ref={ref}
+        className="card-elevated w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold tracking-tight">
+            {user ? "Your account" : mode === "signup" ? "Create your account" : "Welcome back"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+            aria-label="Close"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        {user ? (
+          <div className="mt-5 space-y-4">
+            <div className="rounded-xl bg-zinc-50 p-4 text-sm dark:bg-zinc-800/50">
+              <p className="font-medium">{user.email}</p>
+              <p className="mt-1 text-zinc-500">
+                Free credits remaining: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{profile?.credits ?? 0}</span>
+              </p>
+            </div>
+            <button
+              onClick={async () => { await logout(); onClose(); }}
+              className="w-full rounded-xl border border-zinc-300 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="mt-5 space-y-3">
+            {mode === "signup" && (
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name (optional)"
+                className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:ring-indigo-900/40"
+              />
+            )}
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:ring-indigo-900/40"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password (8+ characters)"
+              required
+              minLength={8}
+              className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:ring-indigo-900/40"
+            />
+            {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+            <button
+              type="submit"
+              disabled={busy}
+              className="bg-gradient-brand w-full rounded-xl py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
+            >
+              {busy ? "Please wait…" : mode === "signup" ? "Create account · 10 free credits" : "Sign in"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signup" ? "login" : "signup")}
+              className="w-full text-center text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+            >
+              {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}

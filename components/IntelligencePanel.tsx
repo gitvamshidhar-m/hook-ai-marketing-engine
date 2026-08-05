@@ -3,14 +3,62 @@
 import { ANGLE_CATEGORIES } from "@/lib/types";
 import type { AnalyzeResult } from "@/lib/types";
 import { computeCoverage } from "@/lib/analytics";
+import { computeHealthScore } from "@/lib/health";
 
 export default function IntelligencePanel({ result }: { result: AnalyzeResult }) {
   const cov = computeCoverage(result);
   const pct = Math.round((cov.covered / cov.total) * 100);
   const competitorUsed = (id: string) => cov.competitorIds.includes(id);
+  const health = computeHealthScore(result);
 
   return (
     <div className="mt-5 space-y-5">
+      {/* Health score */}
+      <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-semibold">Campaign Health Score</h3>
+            <p className="mt-1 text-sm text-zinc-500">
+              One number that grades your whole campaign, from angle diversity to readability.
+            </p>
+          </div>
+          <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-500 text-white shadow-lg shadow-indigo-500/30">
+            <span className="text-2xl font-bold leading-none">{health.score}</span>
+            <span className="text-[10px] font-medium uppercase tracking-wider opacity-90">{health.grade}</span>
+          </div>
+        </div>
+        <div className="mt-4 space-y-2.5">
+          {health.factors.map((f) => (
+            <div key={f.id}>
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium">{f.label}</span>
+                <span className="font-semibold">{Math.round(f.score)}</span>
+              </div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                <div
+                  className={`h-full rounded-full ${f.ok ? "bg-emerald-500" : f.score >= 40 ? "bg-amber-500" : "bg-rose-500"}`}
+                  style={{ width: `${f.score}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-1.5 sm:grid-cols-2">
+          {health.checklist.map((c) => (
+            <div key={c.label} className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${
+                  c.ok ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-400" : "bg-zinc-100 text-zinc-400 dark:bg-zinc-800"
+                }`}
+              >
+                {c.ok ? "✓" : "✕"}
+              </span>
+              {c.label}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Coverage meter */}
       <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="flex items-center justify-between gap-2">

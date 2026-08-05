@@ -62,6 +62,12 @@ export default function ResultView({
 
   function save() {
     saveCampaign(result);
+    // Cloud sync when signed in — the session cookie is sent automatically.
+    fetch("/api/projects/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: result.topic, topic: result.topic, result }),
+    }).catch(() => {});
     setSavedState("done");
     setTimeout(() => setSavedState("idle"), 2000);
   }

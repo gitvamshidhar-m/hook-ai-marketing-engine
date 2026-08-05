@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Campaign } from "@/lib/account";
 import { listCampaigns, deleteCampaign, loadCampaign } from "@/lib/account";
@@ -8,14 +8,34 @@ import ResultView from "@/components/ResultView";
 import { exportCampaignsCSV, exportResultCSV, printResult } from "@/lib/export";
 import type { AnalyzeResult } from "@/lib/types";
 
+type CloudProject = {
+  id: string;
+  title: string;
+  topic: string;
+  result: AnalyzeResult;
+  created_at: string;
+  updated_at: string;
+};
+
 export default function CampaignsPage() {
   const [camps, setCamps] = useState<Campaign[]>(() => listCampaigns());
+  const [cloud, setCloud] = useState<CloudProject[]>([]);
   const [open, setOpen] = useState<AnalyzeResult | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
 
+  // Merge cloud projects when signed in.
+  useEffect(() => {
+    fetch("/api/projects", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setCloud(Array.isArray(d.projects) ? d.projects : []))
+      .catch(() => {});
+  }, []);
+
   function remove(id: string) {
     deleteCampaign(id);
+    fetch(`/api/projects/delete?id=${id}`, { method: "DELETE" }).catch(() => {});
+    setCloud((prev) => prev.filter((p) => p.id !== id));
     setCamps(listCampaigns());
     setNotice("Campaign deleted.");
     setTimeout(() => setNotice(""), 2000);
@@ -27,7 +47,8 @@ export default function CampaignsPage() {
       setOpenId(null);
     } else {
       const c = loadCampaign(id);
-      setOpen(c ? c.result : null);
+      const cloudProject = cloud.find((p) => p.id === id);
+      setOpen(c ? c.result : cloudProject ? cloudProject.result : null);
       setOpenId(id);
     }
   }
@@ -39,7 +60,7 @@ export default function CampaignsPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">My campaigns</h1>
             <p className="mt-1 text-sm text-zinc-500">
-              {camps.length} saved · stored in this browser (syncs to your Supabase account when configured)
+              {camps.length} saved in this browser · {cloud.length} in your account
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -136,6 +157,65 @@ export default function CampaignsPage() {
               );
             })}
           </div>
+        )}
+
+        {cloud.length > 0 && (
+          <>
+            <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+              Synced to your account
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {cloud.map((p) => {
+                const best = p.result.hooks.reduce((a, b) => (b.score > a.score ? b : a), p.result.hooks[0]);
+                return (
+                  <div key={p.id} className="card-elevated flex flex-col rounded-2xl border border-indigo-200 bg-gradient-soft p-5 transition hover:-translate-y-0.5 dark:border-indigo-900 dark:bg-indigo-950/30">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{p.title}</p>
+                        <p className="text-xs text-zinc-500">{new Date(p.updated_at).toLocaleDateString()}</p>
+                      </div>
+                      <button
+                        onClick={() => remove(p.id)}
+                        className="shrink-0 text-xs text-zinc-400 transition hover:text-rose-500"
+                        aria-label="Delete project"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                      {p.result.hooks.length} hooks · best{" "}
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        {best ? `${best.score}/100` : "—"}
+                      </span>
+                      {p.result.aiPowered ? ` · ${p.result.model}` : ""}
+                    </p>
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => openCampaign(p.id)}
+                        className="bg-gradient-brand flex-1 rounded-xl px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110"
+                      >
+                        {openId === p.id ? "Hide details" : "Open"}
+                      </button>
+                      <button
+                        onClick={() => exportResultCSV(p.result)}
+                        className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        title="Export CSV"
+                      >
+                        CSV
+                      </button>
+                      <button
+                        onClick={() => printResult(p.result)}
+                        className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        title="Print"
+                      >
+                        Print
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {open && (

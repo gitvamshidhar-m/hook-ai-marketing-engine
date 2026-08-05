@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAiAdCopy, hasAi } from "@/lib/ai";
+import { rateLimited } from "@/lib/ratelimit";
 import type { AnalyzeResult, Channel } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimited(req);
+  if (limited) return limited;
+
   if (!hasAi()) {
     return NextResponse.json({ error: "No AI provider configured." }, { status: 503 });
   }

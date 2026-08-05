@@ -14,6 +14,7 @@ import {
   trainBrandVoice,
 } from "@/lib/aitools";
 import { hasAi } from "@/lib/ai";
+import { rateLimited } from "@/lib/ratelimit";
 import type { Hook, ImproveMode } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -22,6 +23,9 @@ export const dynamic = "force-dynamic";
 const MODES: ImproveMode[] = ["stronger", "shorter", "curious", "urgent"];
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimited(req);
+  if (limited) return limited;
+
   if (!hasAi()) {
     return NextResponse.json({ error: "No AI provider configured." }, { status: 503 });
   }
