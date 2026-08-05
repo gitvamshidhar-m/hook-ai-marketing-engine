@@ -48,7 +48,7 @@ function SharedResults() {
       <div className="mx-auto w-full max-w-6xl px-4 py-10">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+            <h1 className="text-3xl font-bold tracking-tight">
               {result ? <>Hooks for “{result.topic}”</> : "Shared results"}
             </h1>
             {result && (
@@ -59,14 +59,14 @@ function SharedResults() {
           </div>
           <Link
             href="/#tool"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+            className="bg-gradient-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110"
           >
             Make your own
           </Link>
         </div>
 
         {ref && (
-          <div className="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-950 dark:bg-indigo-950/40">
+          <div className="card-elevated mb-6 rounded-2xl border border-indigo-200 bg-gradient-soft p-4 dark:border-indigo-950 dark:bg-indigo-950/40">
             <p className="text-sm text-indigo-700 dark:text-indigo-300">
               {ref.first
                 ? `You were referred to Hook AI${ref.code !== "anon" ? ` by someone (${ref.code})` : ""}. Share your own results to earn free runs.`
@@ -76,27 +76,32 @@ function SharedResults() {
         )}
 
         {!d && (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-lg font-semibold">This link doesn&apos;t contain valid results.</p>
+          <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xl font-semibold">This link doesn&apos;t contain valid results.</p>
             <p className="mt-1 text-sm text-zinc-500">It may be expired or malformed.</p>
             <Link
               href="/"
-              className="mt-4 inline-block rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500"
+              className="bg-gradient-brand mt-5 inline-block rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110"
             >
               Go generate your own hooks
             </Link>
           </div>
         )}
 
-        {d && !result && !failed && <p className="text-sm text-zinc-500">Loading shared results…</p>}
+        {d && !result && !failed && (
+          <div className="flex items-center gap-2 text-sm text-zinc-500">
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-zinc-300 border-t-indigo-500" />
+            Loading shared results…
+          </div>
+        )}
 
         {failed && (
-          <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-lg font-semibold">This link doesn&apos;t contain valid results.</p>
+          <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xl font-semibold">This link doesn&apos;t contain valid results.</p>
             <p className="mt-1 text-sm text-zinc-500">It may be expired or malformed.</p>
             <Link
               href="/"
-              className="mt-4 inline-block rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500"
+              className="bg-gradient-brand mt-5 inline-block rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110"
             >
               Go generate your own hooks
             </Link>

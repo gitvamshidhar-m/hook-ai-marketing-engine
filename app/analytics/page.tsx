@@ -67,13 +67,13 @@ export default function AnalyticsPage() {
   return (
     <main className="flex-1">
       <div className="mx-auto w-full max-w-4xl px-4 py-10">
-        <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
         <p className="mt-1 text-sm text-zinc-500">
           Real usage stats from your Supabase hook_ai_stats table.
         </p>
 
         {error && (
-          <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+          <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300">
             {error}
           </p>
         )}
@@ -86,34 +86,34 @@ export default function AnalyticsPage() {
         ) : (
           <>
             <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <p className="text-xs uppercase tracking-wide text-zinc-500">Total runs</p>
-                <p className="mt-1 text-3xl font-bold">{totalRuns}</p>
+                <p className="text-gradient mt-1 text-3xl font-bold">{totalRuns}</p>
               </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <p className="text-xs uppercase tracking-wide text-zinc-500">AI-powered</p>
                 <p className="mt-1 text-3xl font-bold">{aiRuns}</p>
               </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <p className="text-xs uppercase tracking-wide text-zinc-500">Engine fallback</p>
                 <p className="mt-1 text-3xl font-bold">{engineRuns}</p>
               </div>
-              <div className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="card-elevated rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <p className="text-xs uppercase tracking-wide text-zinc-500">Avg best score</p>
                 <p className="mt-1 text-3xl font-bold">{avgScore}</p>
               </div>
             </div>
 
             {topTopics.length > 0 && (
-              <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="card-elevated mt-8 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
                   Top topics
                 </h2>
                 <div className="mt-4 space-y-3">
                   {topTopics.map(([topic, count]) => (
                     <div key={topic} className="flex items-center gap-3">
-                      <span className="flex-1 text-sm">{topic}</span>
-                      <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                      <span className="flex-1 truncate text-sm">{topic}</span>
+                      <span className="bg-gradient-brand rounded-full px-2.5 py-0.5 text-xs font-medium text-white">
                         {count} run{count !== 1 ? "s" : ""}
                       </span>
                     </div>
@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
             )}
 
             {stats.length > 0 && (
-              <div className="mt-8 overflow-x-auto rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="card-elevated mt-8 overflow-x-auto rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800">
@@ -138,11 +138,11 @@ export default function AnalyticsPage() {
                     {stats.map((s, i) => (
                       <tr
                         key={i}
-                        className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
+                        className="border-b border-zinc-100 transition last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950"
                       >
                         <td className="px-4 py-3 font-medium">{s.topic}</td>
                         <td className="px-4 py-3">{s.hooks}</td>
-                        <td className="px-4 py-3">{s.best_score}</td>
+                        <td className="px-4 py-3 font-semibold text-emerald-600 dark:text-emerald-400">{s.best_score}</td>
                         <td className="px-4 py-3">
                           {s.ai_powered ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
@@ -165,8 +165,8 @@ export default function AnalyticsPage() {
             )}
 
             {totalRuns === 0 && (
-              <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900">
-                <p className="text-lg font-semibold">No runs yet.</p>
+              <div className="card-elevated mt-8 rounded-2xl border border-zinc-200 bg-white p-12 text-center dark:border-zinc-800 dark:bg-zinc-900">
+                <p className="text-xl font-semibold">No runs yet.</p>
                 <p className="mt-1 text-sm text-zinc-500">
                   Run an analysis on the home page and your stats will appear here.
                 </p>
