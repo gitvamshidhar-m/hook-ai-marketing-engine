@@ -15,6 +15,7 @@ import AiToolsPanel from "./AiToolsPanel";
 import { buildShareUrl } from "@/lib/analytics";
 import { buildShareUrl as buildRefShareUrl, earnBonusOnShare } from "@/lib/referral";
 import { saveCampaign } from "@/lib/account";
+import { exportResultCSV, exportSheets, printCampaignReport } from "@/lib/export";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
 const TABS = ["Hooks", "Angles", "Gap Scan", "USP", "Ad Copy", "Plan", "AI Tools", "Intelligence"] as const;
@@ -109,6 +110,27 @@ export default function ResultView({
             className="rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {savedState === "done" ? "Saved!" : "Save campaign"}
+          </button>
+          <button
+            onClick={() => exportResultCSV(result)}
+            className="rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            title="Download hooks as CSV"
+          >
+            CSV
+          </button>
+          <button
+            onClick={() => exportSheets(result)}
+            className="rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            title="Copy Google Sheets-ready CSV"
+          >
+            Sheets
+          </button>
+          <button
+            onClick={() => printCampaignReport(result)}
+            className="rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            title="Print or save as PDF report"
+          >
+            PDF report
           </button>
           <button
             onClick={share}

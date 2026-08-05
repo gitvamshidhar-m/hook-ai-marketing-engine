@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "./AuthProvider";
 
+type UpgradeState = "idle" | "busy" | "error";
+
 export default function AuthModal({
   open,
   onClose,
@@ -17,7 +19,26 @@ export default function AuthModal({
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [upgrade, setUpgrade] = useState<UpgradeState>("idle");
   const ref = useRef<HTMLDivElement>(null);
+
+  async function checkout(plan: "starter" | "pro") {
+    setUpgrade("busy");
+    setError("");
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Checkout failed.");
+      window.location.href = data.url;
+    } catch (err) {
+      setUpgrade("error");
+      setError(err instanceof Error ? err.message : "Checkout failed.");
+    }
+  }
 
   useEffect(() => {
     if (open) {
@@ -85,6 +106,31 @@ export default function AuthModal({
                 Free credits remaining: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{profile?.credits ?? 0}</span>
               </p>
             </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Top up credits</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => checkout("starter")}
+                  disabled={upgrade === "busy"}
+                  className="rounded-xl border border-zinc-300 p-3 text-left transition hover:border-indigo-400 dark:border-zinc-700"
+                >
+                  <p className="text-lg font-bold">50</p>
+                  <p className="text-xs text-zinc-500">credits · Starter</p>
+                </button>
+                <button
+                  onClick={() => checkout("pro")}
+                  disabled={upgrade === "busy"}
+                  className="bg-gradient-brand rounded-xl p-3 text-left text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110"
+                >
+                  <p className="text-lg font-bold">250</p>
+                  <p className="text-xs text-white/80">credits · Pro</p>
+                </button>
+              </div>
+              {upgrade === "busy" && <p className="mt-2 text-xs text-zinc-500">Opening secure checkout…</p>}
+              {upgrade === "error" && <p className="mt-2 text-xs text-amber-600">{error}</p>}
+            </div>
+
             <button
               onClick={async () => { await logout(); onClose(); }}
               className="w-full rounded-xl border border-zinc-300 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"

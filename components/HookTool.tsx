@@ -8,6 +8,7 @@ import Dashboard from "./Dashboard";
 import TemplateGallery from "./TemplateGallery";
 import { recordRun, supabaseConfigured } from "@/lib/supabase";
 import { bonusRunsToday } from "@/lib/referral";
+import { competitorHooksFromCSV, readFileAsText } from "@/lib/csv";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
 const FREE_DAILY = 20;
@@ -149,6 +150,22 @@ export default function HookTool() {
     run(variation + 1, avoid);
   }
 
+  async function importCompetitorCSV(file: File) {
+    try {
+      const text = await readFileAsText(file);
+      const hooks = competitorHooksFromCSV(text);
+      if (hooks.length === 0) {
+        setError("No usable competitor lines found in that file.");
+        return;
+      }
+      const merged = [...new Set([...competitors.split("\n").map((l) => l.trim()).filter(Boolean), ...hooks])];
+      setCompetitors(merged.join("\n"));
+      setError("");
+    } catch {
+      setError("Couldn't read that file — please upload a plain CSV.");
+    }
+  }
+
   const remaining =
     rerunsLeft !== null ? rerunsLeft : Math.max(0, FREE_DAILY + bonusRunsToday() - usedToday());
   const bonusToday = bonusRunsToday();
@@ -250,8 +267,23 @@ export default function HookTool() {
         {advancedOpen && (
           <div className="mt-4 space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40 sm:p-5">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">
-                Competitor headlines / ad copy (one per line) — feeds the gap scanner
+              <span className="mb-1.5 flex items-center justify-between text-sm font-medium">
+                <span>
+                  Competitor headlines / ad copy (one per line) — feeds the gap scanner
+                </span>
+                <label className="ml-2 inline-flex cursor-pointer items-center gap-1 rounded-full border border-zinc-300 bg-white px-2.5 py-0.5 text-[11px] font-medium text-zinc-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+                  ⤓ Import CSV
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) importCompetitorCSV(f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
               </span>
               <textarea
                 value={competitors}
