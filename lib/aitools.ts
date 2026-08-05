@@ -364,14 +364,14 @@ export async function generateLandingPage(
   result: AnalyzeResult,
   sections: number
 ): Promise<{ sections: LandingPageSection[]; model: string }> {
-  const topHooks = [...result.hooks].sort((a, b) => b.score - a.score).slice(0, 3);
+  const topHooks = ((result && result.hooks) || []).slice().sort((a, b) => b.score - a.score).slice(0, 3);
   const prompt = [
     "You are a conversion-focused copywriter. Generate a landing page from the analysis below.",
     `Topic: ${result.topic}`,
     `Audience: ${result.audience || "general"}`,
     `Goal: ${result.goal || "generate clicks"}`,
-    `Positioning: ${result.usp.positioningStatement}`,
-    `Elevator: ${result.usp.elevatorPitch}`,
+    `Positioning: ${result.usp?.positioningStatement || ""}`,
+    `Elevator: ${result.usp?.elevatorPitch || ""}`,
     `Best hooks: ${topHooks.map((h) => `"${h.text}"`).join(", ")}`,
     `Number of sections: ${sections}`,
     "Output ONLY a JSON array.",
@@ -497,7 +497,7 @@ export async function allocateBudget(
     `Audience: ${result.audience || "general"}`,
     `Goal: ${result.goal || "generate clicks"}`,
     `Total budget: $${totalBudget}`,
-    `Top hooks: ${result.hooks.slice(0, 3).map((h) => `"${h.text}"`).join(", ")}`,
+    `Top hooks: ${(result.hooks || []).slice(0, 3).map((h) => `"${h.text}"`).join(", ")}`,
     "Output ONLY a JSON array.",
     'Shape: [{"channel":"Google Ads / Meta / LinkedIn / TikTok / Email / YouTube","percent":40,"rationale":"why this channel","estimatedCpc":"$0.50"}]',
     "Rules: percentages must sum to 100. Include at least 3 channels. No markdown, no preamble.",

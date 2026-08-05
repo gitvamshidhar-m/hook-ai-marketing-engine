@@ -205,8 +205,11 @@ function summarizePromise(topic: string) {
 /* ---------------- main entry (no-AI fallback) ---------------- */
 
 export function generateResult(input: AnalyzeInput): AnalyzeResult {
+  const VALID_CHANNELS = ["ad", "email", "youtube", "blog"] as string[];
   const channels: Channel[] =
-    input.channel && input.channel !== "all" ? [input.channel] : (["ad", "email", "youtube", "blog"] as Channel[]);
+    input.channel && VALID_CHANNELS.includes(input.channel)
+      ? [input.channel as Channel]
+      : (["ad", "email", "youtube", "blog"] as Channel[]);
   const angles = buildAngles(input.topic);
   const hooks: Hook[] = [];
   const count = input.count && input.count > 0 ? input.count : 3;

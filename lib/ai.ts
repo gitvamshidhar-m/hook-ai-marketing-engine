@@ -174,8 +174,11 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
     : typeof input.voiceSamples === "string"
       ? input.voiceSamples.split("\n")
       : [];
+  const VALID_CHANNELS = ["ad", "email", "youtube", "blog"] as string[];
   const channels: Channel[] =
-    input.channel && input.channel !== "all" ? [input.channel] : ["ad", "email", "youtube", "blog"];
+    input.channel && VALID_CHANNELS.includes(input.channel)
+      ? [input.channel as Channel]
+      : ["ad", "email", "youtube", "blog"];
   const variation = input.variation && input.variation > 0 ? input.variation : 0;
 
   const rawByChannel = new Map<string, string>();
@@ -304,9 +307,9 @@ export async function generateAiAdCopy(
     result.language && result.language !== "en"
       ? `Write the copy in ${result.language}.`
       : "Write the copy in English.";
-  const hooks = [...result.hooks].sort((a, b) => b.score - a.score).slice(0, 4);
+  const hooks = (result.hooks && [...result.hooks].sort((a, b) => b.score - a.score).slice(0, 4)) || [];
   const voiceLine = result.voice
-    ? `Match the brand voice (${result.voice.detected.join(", ")}). ${result.voice.summary}`
+    ? `Match the brand voice (${(result.voice.detected || []).join(", ")}). ${result.voice.summary}`
     : "Use a confident, conversational marketing voice.";
   const keywordLine =
     result.keywords && result.keywords.length
@@ -316,6 +319,7 @@ export async function generateAiAdCopy(
     result.taglines && result.taglines.length
       ? `You may pull a line from these catchphrases: ${result.taglines.slice(0, 3).map((t) => `"${t.text}"`).join(", ")}.`
       : "";
+  const differentiators = (result.usp && result.usp.differentiators) || [];
 
   const prompt = [
     "You are a direct-response copywriter. Write ONE complete, paste-ready ad.",
@@ -328,7 +332,7 @@ export async function generateAiAdCopy(
     `Highest-scoring hooks to draw from: ${hooks.map((h) => `"${h.text}"`).join(", ")}`,
     `POSITIONING: ${result.usp.positioningStatement}`,
     `ELEVATOR: ${result.usp.elevatorPitch}`,
-    `DIFFERENTIATORS: ${result.usp.differentiators.join("; ")}`,
+    `DIFFERENTIATORS: ${differentiators.join("; ")}`,
     keywordLine,
     taglineLine,
     "",
