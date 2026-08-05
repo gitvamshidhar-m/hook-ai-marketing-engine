@@ -78,6 +78,10 @@ alter table public.community_hooks enable row level security;
 create policy "community_hooks_public_read" on public.community_hooks
   for select using (true);
 
+-- The app inserts best hooks with the anon key (no user session needed).
+create policy "community_hooks_anon_insert" on public.community_hooks
+  for insert to anon with check (true);
+
 -- 5. Payments ledger (Stripe webhooks)
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
