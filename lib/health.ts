@@ -147,8 +147,8 @@ export function computeHealthScore(result: AnalyzeResult): HealthScore {
   });
 
   const totalWeight = factors.reduce((s, f) => s + f.weight, 0);
-  const score = clamp(
-    factors.reduce((s, f) => s + f.score * (f.weight / totalWeight), 0)
+  const score = Math.round(
+    clamp(factors.reduce((s, f) => s + f.score * (f.weight / totalWeight), 0))
   );
 
   const grade =
