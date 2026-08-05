@@ -12,7 +12,7 @@ export default function AuthModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const { user, profile, login, signup, logout } = useAuth();
+  const { user, profile, login, signup, logout, refresh } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,7 +33,50 @@ export default function AuthModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Checkout failed.");
-      window.location.href = data.url;
+
+      // Load Razorpay checkout script, then open the payment modal.
+      await new Promise<void>((resolve, reject) => {
+        if ((window as unknown as { Razorpay?: unknown }).Razorpay) return resolve();
+        const s = document.createElement("script");
+        s.src = "https://checkout.razorpay.com/v1/checkout.js";
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error("Couldn't load payment checkout."));
+        document.head.appendChild(s);
+      });
+
+      const R = (window as unknown as {
+        Razorpay: new (opts: Record<string, unknown>) => { open: () => void };
+      }).Razorpay;
+
+      const payment = new R({
+        key: data.keyId,
+        amount: data.amount,
+        currency: data.currency,
+        name: "Hook AI",
+        description: data.label,
+        theme: { color: "#6366f1" },
+        order_id: data.orderId,
+        prefill: { email: user?.email || "" },
+        handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
+          const verify = await fetch("/api/billing/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id,
+              signature: response.razorpay_signature,
+              plan,
+            }),
+          });
+          const vdata = await verify.json();
+          if (!verify.ok) throw new Error(vdata.error || "Verification failed.");
+          setUpgrade("idle");
+          setError("");
+          await refresh();
+        },
+        modal: { ondismiss: () => setUpgrade("idle") },
+      });
+      payment.open();
     } catch (err) {
       setUpgrade("error");
       setError(err instanceof Error ? err.message : "Checkout failed.");
