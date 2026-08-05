@@ -68,8 +68,8 @@ def test_ai_tools():
     check("explain works", status == 200 and data.get("explanation"), f"got {status}")
     status, data = call("/api/ai-tools", {"tool": "angles", "topic": "project management software", "audience": "founders", "goal": "trials"})
     check("angles works", status == 200 and data.get("angles"), f"got {status}")
-    status, data = call("/api/ai-tools", {"tool": "persona", "result": result})
-    check("persona works", status == 200 and data.get("personas"), f"got {status}")
+    status, data = call("/api/ai-tools", {"tool": "persona", "topic": "project management software", "audience": "busy founders and small teams"})
+    check("persona works", status == 200 and data.get("personas"), f"got {status}: {data}")
     status, data = call("/api/ai-tools", {"tool": "seo", "bestHook": result["hooks"][0], "topic": "project management"})
     check("seo works", status == 200 and data.get("meta"), f"got {status}")
     status, data = call("/api/ai-tools", {"tool": "budget", "result": result, "totalBudget": 1000})
@@ -85,8 +85,14 @@ def test_adcopy():
 
 def test_health():
     print("[health]")
-    status, data = call("/api/health", {})
-    check("health returns 200", status == 200, f"got {status}")
+    req = urllib.request.Request(BASE + "/api/health", method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode())
+            check("health returns 200", resp.status == 200, f"got {resp.status}")
+            check("health reports ok", data.get("status") == "ok", str(data))
+    except urllib.error.HTTPError as e:
+        check("health returns 200", False, f"got {e.code}")
 
 
 if __name__ == "__main__":
