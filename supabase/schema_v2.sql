@@ -16,6 +16,11 @@ create table if not exists public.hook_ai_stats (
   created_at timestamptz not null default now()
 );
 
+-- Idempotent backfill: if hook_ai_stats pre-existed without health_score,
+-- add the column so the dashboard keeps working.
+alter table public.hook_ai_stats add column if not exists health_score integer;
+alter table public.hook_ai_stats add column if not exists user_id uuid references auth.users(id) on delete set null;
+
 alter table public.hook_ai_stats enable row level security;
 
 -- Public read so the /analytics page can render without auth.
