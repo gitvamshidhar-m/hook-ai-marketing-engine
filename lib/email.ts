@@ -1,3 +1,5 @@
+import nodemailer from "nodemailer";
+
 type EmailInput = {
   to: string;
   subject: string;
@@ -5,37 +7,70 @@ type EmailInput = {
   html?: string;
 };
 
+let cachedTransporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+
+function gmailTransporter() {
+  if (cachedTransporter) return cachedTransporter;
+  cachedTransporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
+  return cachedTransporter;
+}
+
 /**
- * Send a transactional email. Requires RESEND_API_KEY — if missing, this logs
- * and no-ops so the whole app keeps working without email configured.
- * Returns true only if the provider accepted the send (a later code path
- * records the send so failed deliveries are never logged as sent).
+ * Send a transactional email.
+ * Preferred path: Gmail SMTP (free, no domain) when GMAIL_APP_PASSWORD is set.
+ * Fallback path: Resend when RESEND_API_KEY is set.
+ * If neither is configured this logs and no-ops so the app keeps working.
+ * Returns true only if the provider accepted the send (callers record the
+ * send afterwards so failed deliveries are never logged as sent).
  */
 export async function sendEmail({ to, subject, text, html }: EmailInput): Promise<boolean> {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) {
-    console.log("[email] skipped (no RESEND_API_KEY)", { to, subject });
-    return false;
-  }
-  const from = process.env.RESEND_FROM || "Hook AI <onboarding@resend.dev>";
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ from, to, subject, text, html: html || text }),
-    });
-    if (!res.ok) {
-      console.error("[email] provider rejected send (non-fatal)", { to, subject, status: res.status });
+  if (process.env.GMAIL_APP_PASSWORD && process.env.GMAIL_USER) {
+    try {
+      await gmailTransporter().sendMail({
+        from: `Hook AI <${process.env.GMAIL_USER}>`,
+        to,
+        subject,
+        text,
+        html: html || text,
+      });
+      return true;
+    } catch (e) {
+      console.error("[email] gmail send failed (non-fatal)", e);
       return false;
     }
-    return true;
-  } catch (e) {
-    console.error("[email] send failed (non-fatal)", e);
-    return false;
   }
+
+  const key = process.env.RESEND_API_KEY;
+  if (key) {
+    const from = process.env.RESEND_FROM || "Hook AI <onboarding@resend.dev>";
+    try {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ from, to, subject, text, html: html || text }),
+      });
+      if (!res.ok) {
+        console.error("[email] provider rejected send (non-fatal)", { to, subject, status: res.status });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.error("[email] send failed (non-fatal)", e);
+      return false;
+    }
+  }
+
+  console.log("[email] skipped (no sender configured)", { to, subject });
+  return false;
 }
 
 export function welcomeEmailText(name: string): string {

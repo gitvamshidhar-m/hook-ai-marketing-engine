@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
   // Without a sender configured, don't mark anything as mailed — the send
   // is only logged AFTER it succeeds so a key added later isn't blocked
   // by 7-day dedupe for emails we never actually delivered.
-  if (!process.env.RESEND_API_KEY) {
+  const senderConfigured =
+    Boolean(process.env.GMAIL_APP_PASSWORD && process.env.GMAIL_USER) ||
+    Boolean(process.env.RESEND_API_KEY);
+  if (!senderConfigured) {
     return NextResponse.json({
       ok: true,
       summary: { nurture: 0, topup: 0, skippedNoKey: true },
