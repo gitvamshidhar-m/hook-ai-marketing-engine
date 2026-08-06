@@ -48,12 +48,14 @@ export async function GET(req: NextRequest) {
     let sent = 0;
     for (const row of rows as T[]) {
       const email = (row as { email: string }).email;
-      await sendEmail({
+      const delivered = await sendEmail({
         to: email,
         subject: campaign === CAMPAIGN_NURTURE ? "Your hooks are still here" : "Out of credits? Here's your fastest way back",
         text: makeText(row),
       });
-      // Idempotent guard lives in the DB; skip rows we can't address.
+      // Only record a send the provider actually accepted, so failed
+      // deliveries aren't suppressed by the 7-day dedupe.
+      if (!delivered) continue;
       const { data: logged } = await supabase.rpc("log_email", {
         p_email: email,
         p_campaign: campaign,

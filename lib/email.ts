@@ -8,16 +8,18 @@ type EmailInput = {
 /**
  * Send a transactional email. Requires RESEND_API_KEY — if missing, this logs
  * and no-ops so the whole app keeps working without email configured.
+ * Returns true only if the provider accepted the send (a later code path
+ * records the send so failed deliveries are never logged as sent).
  */
-export async function sendEmail({ to, subject, text, html }: EmailInput): Promise<void> {
+export async function sendEmail({ to, subject, text, html }: EmailInput): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.log("[email] skipped (no RESEND_API_KEY)", { to, subject });
-    return;
+    return false;
   }
   const from = process.env.RESEND_FROM || "Hook AI <onboarding@resend.dev>";
   try {
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${key}`,
@@ -25,8 +27,14 @@ export async function sendEmail({ to, subject, text, html }: EmailInput): Promis
       },
       body: JSON.stringify({ from, to, subject, text, html: html || text }),
     });
+    if (!res.ok) {
+      console.error("[email] provider rejected send (non-fatal)", { to, subject, status: res.status });
+      return false;
+    }
+    return true;
   } catch (e) {
     console.error("[email] send failed (non-fatal)", e);
+    return false;
   }
 }
 
