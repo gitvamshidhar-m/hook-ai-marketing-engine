@@ -28,6 +28,18 @@ export default function Footer() {
           <Link href="/analytics" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
             Analytics
           </Link>
+          <Link href="/growth" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Growth
+          </Link>
+          <Link href="/seo" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            SEO
+          </Link>
+          <Link href="/challenge" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Challenge
+          </Link>
+          <Link href="/pricing" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Pricing
+          </Link>
           <Link href="/terms" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
             Terms
           </Link>

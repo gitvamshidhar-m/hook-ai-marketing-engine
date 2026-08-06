@@ -127,3 +127,30 @@ https://hook-ai-marketing-engine.vercel.app/account
 
 — The Hook AI team`;
 }
+
+export function reengageEmailText(): string {
+  return `We noticed you haven't been back in a few days — and your best results are still waiting for you.
+
+Your saved campaigns, templates, and credits are all exactly where you left them:
+
+https://hook-ai-marketing-engine.vercel.app/
+
+Pro tip: if you're stuck, try "trying harder" variations on your last topic — they never count against your daily allowance.
+
+— The Hook AI team`;
+}
+
+export function lowBalanceEmailText(credits: number): string {
+  return `You're ${credits} run${credits === 1 ? "" : "s"} away from hitting zero credits.
+
+No need to stop mid-campaign. Two free ways to keep going:
+
+1. Share a result card — each friend who signs up through your link adds a credit.
+2. Your daily free allowance resets every morning for quick hooks.
+
+Or top up instantly (Starter/Pro packs) so nothing interrupts your flow:
+
+https://hook-ai-marketing-engine.vercel.app/account
+
+— The Hook AI team`;
+}

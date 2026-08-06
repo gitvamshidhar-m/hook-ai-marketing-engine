@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseConfigured } from "@/lib/supabase";
-import { sendEmail, nurtureEmailText, topupEmailText } from "@/lib/email";
+import {
+  sendEmail,
+  nurtureEmailText,
+  topupEmailText,
+  reengageEmailText,
+  lowBalanceEmailText,
+} from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +15,15 @@ export const maxDuration = 300;
 
 const CAMPAIGN_NURTURE = "nurture";
 const CAMPAIGN_TOPUP = "topup";
+const CAMPAIGN_REENGAGE = "reengage";
+const CAMPAIGN_LOWBALANCE = "lowbalance";
+
+const SUBJECTS: Record<string, string> = {
+  [CAMPAIGN_NURTURE]: "Your hooks are still here",
+  [CAMPAIGN_TOPUP]: "Out of credits? Here's your fastest way back",
+  [CAMPAIGN_REENGAGE]: "Your best results are still waiting",
+  [CAMPAIGN_LOWBALANCE]: "You're a few runs from hitting zero",
+};
 
 export async function GET(req: NextRequest) {
   // Vercel cron sends an Authorization header with the secret when configured.
@@ -30,13 +45,25 @@ export async function GET(req: NextRequest) {
   if (!senderConfigured) {
     return NextResponse.json({
       ok: true,
-      summary: { nurture: 0, topup: 0, skippedNoKey: true },
+      summary: {
+        nurture: 0,
+        topup: 0,
+        reengage: 0,
+        lowbalance: 0,
+        skippedNoKey: true,
+      },
     });
   }
 
   const supabase = await createServerSupabase();
 
-  const summary = { nurture: 0, topup: 0, skippedNoKey: false };
+  const summary = {
+    nurture: 0,
+    topup: 0,
+    reengage: 0,
+    lowbalance: 0,
+    skippedNoKey: false,
+  };
 
   async function mailCandidates<T>(
     campaign: string,
@@ -53,7 +80,7 @@ export async function GET(req: NextRequest) {
       const email = (row as { email: string }).email;
       const delivered = await sendEmail({
         to: email,
-        subject: campaign === CAMPAIGN_NURTURE ? "Your hooks are still here" : "Out of credits? Here's your fastest way back",
+        subject: SUBJECTS[campaign] || "Update from Hook AI",
         text: makeText(row),
       });
       // Only record a send the provider actually accepted, so failed
@@ -78,6 +105,18 @@ export async function GET(req: NextRequest) {
     CAMPAIGN_TOPUP,
     "topup_email_candidates",
     () => topupEmailText()
+  );
+
+  summary.reengage = await mailCandidates<{ email: string }>(
+    CAMPAIGN_REENGAGE,
+    "reengage_email_candidates",
+    () => reengageEmailText()
+  );
+
+  summary.lowbalance = await mailCandidates<{ email: string; credits: number }>(
+    CAMPAIGN_LOWBALANCE,
+    "lowbalance_email_candidates",
+    (row) => lowBalanceEmailText(row.credits)
   );
 
   return NextResponse.json({ ok: true, summary });

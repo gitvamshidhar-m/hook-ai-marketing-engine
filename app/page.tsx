@@ -1,13 +1,15 @@
 import Link from "next/link";
 import HookTool from "@/components/HookTool";
+import HeroAb from "@/components/HeroAb";
 
 export const revalidate = 300;
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-// A/B scaffold: flip HERO_VARIANT at deploy time to test a second headline.
-const HERO_VARIANT = process.env.HERO_VARIANT || "A";
+// A/B scaffold: HERO_VARIANT can force a variant at deploy time; otherwise
+// the visitor is assigned A/B client-side and every view/click is tracked.
+const HERO_VARIANT = process.env.HERO_VARIANT || "";
 
 async function fetchSocialProof(): Promise<{ hooks: number; campaigns: number }> {
   if (!URL || !KEY) return { hooks: 0, campaigns: 0 };
@@ -141,21 +143,7 @@ export default async function Home() {
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-500" />
             Free · AI-powered · No signup
           </span>
-          <h1 className="animate-fade-up mx-auto mt-6 max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl [animation-delay:80ms]">
-            {HERO_VARIANT === "B" ? (
-              <>
-                The hook machine.
-                <br />
-                <span className="text-gradient">Stop guessing what converts.</span>
-              </>
-            ) : (
-              <>
-                Stop writing headlines.
-                <br />
-                <span className="text-gradient">Start winning angles.</span>
-              </>
-            )}
-          </h1>
+          <HeroAb forced={HERO_VARIANT} />
           <p className="animate-fade-up mx-auto mt-6 max-w-2xl text-lg text-zinc-600 dark:text-zinc-400 [animation-delay:160ms]">
             Hook AI is the angle-discovery engine for digital marketers. It finds the psychological triggers your
             competitors are ignoring, scores every hook, drafts your ad copy, and plans your campaign — all in one shot.
@@ -163,12 +151,14 @@ export default async function Home() {
           <div className="animate-fade-up mt-9 flex flex-wrap items-center justify-center gap-3 [animation-delay:240ms]">
             <Link
               href="#tool"
+              data-hero-cta
               className="bg-gradient-brand rounded-lg px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:brightness-110 active:scale-[0.98]"
             >
               Try the tool free
             </Link>
             <a
               href="#features"
+              data-hero-cta
               className="rounded-lg border border-zinc-300 bg-white/60 px-6 py-3 text-sm font-semibold backdrop-blur transition hover:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-900/60 dark:hover:border-zinc-600"
             >
               See how it works
