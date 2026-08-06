@@ -15,11 +15,21 @@ type Overview = {
 type CommunityRow = { id: number; hook: string; score: number; topic: string | null; created_at: string };
 type PaymentRow = { id: string; email: string | null; amount_paise: number; credits: number; status: string; created_at: string };
 
+type Funnel = {
+  byEvent: Record<string, number>;
+  bySource: Record<string, number>;
+  funnel: { stage: string; count: number }[];
+  raw: { events: number; captures: number; signups: number; capturedProfiles: number };
+};
+
+const FUNNEL_WIDTHS = ["bg-emerald-500", "bg-indigo-500", "bg-violet-500"];
+
 export default function AdminPage() {
   const { user } = useAuth();
   const [overview, setOverview] = useState<Overview | null>(null);
   const [community, setCommunity] = useState<CommunityRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [funnel, setFunnel] = useState<Funnel | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -27,14 +37,16 @@ export default function AdminPage() {
     setLoading(true);
     setError("");
     try {
-      const [o, c, p] = await Promise.all([
+      const [o, c, p, f] = await Promise.all([
         fetch("/api/admin/overview").then((r) => (r.ok ? r.json() : Promise.reject(new Error("overview")))),
         fetch("/api/admin/community").then((r) => (r.ok ? r.json() : Promise.reject(new Error("community")))),
         fetch("/api/admin/payments").then((r) => (r.ok ? r.json() : Promise.reject(new Error("payments")))),
+        fetch("/api/admin/funnel").then((r) => (r.ok ? r.json() : null)),
       ]);
       setOverview(o);
       setCommunity(c);
       setPayments(p);
+      setFunnel(f);
     } catch {
       setError("Could not load admin data — are you signed in as an admin?");
     } finally {
@@ -111,6 +123,66 @@ export default function AdminPage() {
                 <p className="text-gradient mt-1 text-2xl font-bold">{val}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Growth funnel */}
+        {funnel && (
+          <div className="card-elevated mt-8 rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+            <h2 className="border-b border-zinc-200 px-5 py-4 font-semibold dark:border-zinc-800">
+              Growth funnel &amp; attribution
+            </h2>
+            <div className="grid gap-6 p-5 md:grid-cols-2">
+              <div>
+                <p className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Wide → narrow</p>
+                {funnel.funnel.map((stage, i) => {
+                  const max = Math.max(...funnel.funnel.map((s) => s.count), 1);
+                  return (
+                    <div key={stage.stage} className="mb-3">
+                      <div className="mb-1 flex items-center justify-between text-sm">
+                        <span className="font-medium">{stage.stage}</span>
+                        <span className="font-semibold">{stage.count.toLocaleString()}</span>
+                      </div>
+                      <div className="h-2.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+                        <div
+                          className={`h-full rounded-full ${FUNNEL_WIDTHS[i]}`}
+                          style={{ width: `${Math.max((stage.count / max) * 100, 2)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {Object.keys(funnel.byEvent).length > 0 && (
+                  <div className="mt-4 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                    <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500">Events</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.entries(funnel.byEvent).map(([k, v]) => (
+                        <span key={k} className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium dark:bg-zinc-800">
+                          {k} · {v}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="mb-3 text-xs uppercase tracking-wide text-zinc-500">Signup attribution by channel</p>
+                {Object.keys(funnel.bySource).length === 0 ? (
+                  <p className="text-sm text-zinc-500">No attributed signups yet — UTM params get captured on first touch.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {Object.entries(funnel.bySource)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([k, v]) => (
+                        <div key={k} className="flex items-center justify-between rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
+                          <span className="font-medium">{k}</span>
+                          <span className="font-semibold">{v}</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

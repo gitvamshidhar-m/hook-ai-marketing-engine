@@ -4,6 +4,7 @@ import { generateResult } from "@/lib/engine";
 import { spendCredit, CAMPAIGN_COST, PREMIUM_CAMPAIGN_COST } from "@/lib/credits";
 import { rateLimited } from "@/lib/ratelimit";
 import { buildCampaignPlan } from "@/lib/campaign";
+import { trackEventForCurrentUser } from "@/lib/events";
 import type { AnalyzeInput } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -52,5 +53,6 @@ export async function POST(req: NextRequest) {
   const plan = buildCampaignPlan(result, { budget: Math.max(50, Number(body.budget) || 500) });
 
   const spent = await spendCredit(cost);
+  await trackEventForCurrentUser(premium ? "premium_run" : "campaign_run", { topic }).catch(() => {});
   return NextResponse.json(spent.ok ? { ...result, plan, creditsRemaining: spent.remaining } : { ...result, plan });
 }

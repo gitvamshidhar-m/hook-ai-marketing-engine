@@ -11,6 +11,8 @@ import { useAuth } from "./AuthProvider";
 import { computeHealthScore } from "@/lib/health";
 import { bonusRunsToday } from "@/lib/referral";
 import { competitorHooksFromCSV, readFileAsText } from "@/lib/csv";
+import { track, emailBonusRunsToday, isEmailBonusClaimed } from "@/lib/tracking";
+import EmailCapture from "./EmailCapture";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
 const FREE_DAILY = 20;
@@ -40,6 +42,7 @@ export default function HookTool() {
   const [rerunsLeft, setRerunsLeft] = useState<number | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
+  const [emailBonus, setEmailBonus] = useState(() => emailBonusRunsToday());
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,8 +99,8 @@ export default function HookTool() {
 
   async function run(variationSeed: number, avoid: string[]) {
     if (!topic.trim()) return setError("Enter a topic to start.");
-    if (variationSeed === 0 && usedToday() >= FREE_DAILY + bonusRunsToday()) {
-      setError(`You hit the free limit (${FREE_DAILY} runs/day). Share results to earn bonus runs, try harder variations, or come back tomorrow.`);
+    if (variationSeed === 0 && usedToday() >= FREE_DAILY + bonusRunsToday() + emailBonus) {
+      setError(`You hit the free limit (${FREE_DAILY} runs/day). Share results or grab the +5 email bonus to earn more, try harder variations, or come back tomorrow.`);
       return;
     }
     setLoading(true);
@@ -132,6 +135,7 @@ export default function HookTool() {
       if (variationSeed === 0) {
         bumpUsed();
         recordRun({ ...statsPayload(data), healthScore: computeHealthScore(data).score, userId: user?.id || undefined });
+        track("tool_used", { topic, channel });
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error.");
@@ -170,8 +174,9 @@ export default function HookTool() {
   }
 
   const remaining =
-    rerunsLeft !== null ? rerunsLeft : Math.max(0, FREE_DAILY + bonusRunsToday() - usedToday());
+    rerunsLeft !== null ? rerunsLeft : Math.max(0, FREE_DAILY + bonusRunsToday() + emailBonus - usedToday());
   const bonusToday = bonusRunsToday();
+  const showEmailCapture = Boolean(result) && !user && !isEmailBonusClaimed();
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10">
@@ -182,6 +187,7 @@ export default function HookTool() {
             <span className="h-2 w-2 rounded-full bg-indigo-500" aria-hidden />
             Free plan · {remaining}/{FREE_DAILY} runs today
             {bonusToday > 0 ? <span className="text-emerald-500">(+{bonusToday} from sharing)</span> : ""}
+            {emailBonus > 0 ? <span className="text-indigo-500">(+{emailBonus} from email)</span> : ""}
             {supabaseConfigured ? "" : " · trying harder is unlimited"}
           </span>
           {result && (
@@ -345,7 +351,17 @@ export default function HookTool() {
 
       <div ref={resultRef}>
         {result && (
-          <ResultView result={result} onTryHarder={tryHarder} tryingHarder={tryingHarder} loading={loading} />
+          <>
+            <ResultView result={result} onTryHarder={tryHarder} tryingHarder={tryingHarder} loading={loading} />
+            {showEmailCapture && (
+              <EmailCapture
+                topic={result.topic}
+                onClaimed={(b) => {
+                  setEmailBonus((prev) => Math.max(prev, b));
+                }}
+              />
+            )}
+          </>
         )}
       </div>
       <Dashboard result={result} />

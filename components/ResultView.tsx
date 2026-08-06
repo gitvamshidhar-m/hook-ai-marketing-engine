@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { AnalyzeResult, Channel } from "@/lib/types";
 import { CHANNEL_LABELS, ANGLE_CATEGORIES } from "@/lib/types";
 import IntelligencePanel from "./IntelligencePanel";
@@ -16,6 +17,7 @@ import { buildShareUrl } from "@/lib/analytics";
 import { buildShareUrl as buildRefShareUrl, earnBonusOnShare } from "@/lib/referral";
 import { saveCampaign } from "@/lib/account";
 import { exportResultCSV, exportSheets, printCampaignReport } from "@/lib/export";
+import { track } from "@/lib/tracking";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
 const TABS = ["Hooks", "Angles", "Gap Scan", "USP", "Ad Copy", "Plan", "AI Tools", "Intelligence"] as const;
@@ -52,6 +54,7 @@ export default function ResultView({
     const url = await buildShareUrl(result);
     const refUrl = buildRefShareUrl(url);
     const earned = earnBonusOnShare();
+    track("share_created", { topic: result.topic });
     try {
       await navigator.clipboard.writeText(refUrl);
       setShareState(earned ? "bonus" : "copied");
@@ -176,6 +179,13 @@ export default function ResultView({
               <p className="mt-1.5 text-xl font-semibold sm:text-2xl">{best.text}</p>
             </div>
             <span className="flex shrink-0 items-center gap-2">
+              <Link
+                href={`/card?t=${encodeURIComponent(result.topic)}&q=${encodeURIComponent(best.text)}&s=${best.score}&p=${encodeURIComponent(best.psychology)}`}
+                className="rounded-lg border border-white/40 px-3 py-1.5 text-xs font-medium transition hover:bg-white/10"
+                title="Open the viral scorecard for this hook"
+              >
+                Scorecard ↗
+              </Link>
               <button
                 onClick={() => copy(best.text, "best")}
                 className="rounded-lg border border-white/40 px-3 py-1.5 text-xs font-medium transition hover:bg-white/10"

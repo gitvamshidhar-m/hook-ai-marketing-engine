@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseConfigured } from "@/lib/supabase";
+import { trackEventForCurrentUser } from "@/lib/events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,6 +58,8 @@ export async function POST(req: NextRequest) {
   if (trackError) {
     console.error("Share engagement count failed (non-fatal)", trackError);
   }
+
+  await trackEventForCurrentUser("lead_captured", { shareSlug, company: company || undefined });
 
   return NextResponse.json({ ok: true });
 }

@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { detectReferral } from "@/lib/referral";
+import { captureAttribution, getAttribution } from "@/lib/tracking";
 
 type User = { id: string; email: string };
 type Profile = { id: string; email: string; name: string; credits: number; role?: string; ref_code?: string };
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     detectReferral();
+    captureAttribution();
   }, []);
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name, ref }),
+        body: JSON.stringify({ email, password, name, ref, attr: getAttribution() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Sign up failed.");

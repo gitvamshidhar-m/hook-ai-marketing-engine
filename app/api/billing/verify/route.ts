@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { razorpayConfigured, verifyRazorpaySignature, planCredits, planAmount } from "@/lib/razorpay";
 import { addCredits } from "@/lib/credits";
+import { trackEventForCurrentUser } from "@/lib/events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
     credits: planCredits(plan),
     status: "completed",
   });
+  await trackEventForCurrentUser("topup", { plan, credits: planCredits(plan) });
 
   return NextResponse.json({ ok: true, credits: planCredits(plan) });
 }
