@@ -23,7 +23,7 @@ export const dynamic = "force-dynamic";
 const MODES: ImproveMode[] = ["stronger", "shorter", "curious", "urgent"];
 
 export async function POST(req: NextRequest) {
-  const limited = rateLimited(req);
+  const limited = await rateLimited(req);
   if (limited) return limited;
 
   if (!hasAi()) {
