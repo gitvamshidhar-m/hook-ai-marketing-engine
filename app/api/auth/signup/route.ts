@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const REFERRAL_BONUS = 5;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://hook-ai-marketing-engine.vercel.app";
 
 export async function POST(req: NextRequest) {
   if (!supabaseConfigured) {
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
     password,
     options: {
       data: { name: name || "Marketer" },
+      emailRedirectTo: SITE_URL,
     },
   });
 

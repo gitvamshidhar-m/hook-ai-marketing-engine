@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseConfigured } from "@/lib/supabase";
+import { rateLimited } from "@/lib/ratelimit";
 import { trackEventForCurrentUser } from "@/lib/events";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimited(req);
+  if (limited) return limited;
   if (!supabaseConfigured) {
     return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
   }

@@ -4,6 +4,7 @@ import "./globals.css";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/components/AuthProvider";
+import CookieConsent from "@/components/CookieConsent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,12 +37,14 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://hook-ai-marketing-engine.vercel.app",
     siteName: "Hook AI",
+    images: [{ url: "/og/home", width: 1200, height: 630, alt: "Hook AI — Stop writing headlines. Start winning angles." }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Hook AI — The Angle Discovery Engine for Marketers",
     description:
       "Find the psychological angles your competitors are missing, get CTR-predicted headlines, and a USP in seconds.",
+    images: ["/og/home"],
   },
   icons: {
     icon: "/icon.svg",
@@ -84,6 +87,7 @@ export default function RootLayout({
           <NavBar />
           {children}
           <Footer />
+          <CookieConsent />
         </AuthProvider>
         <script
           dangerouslySetInnerHTML={{

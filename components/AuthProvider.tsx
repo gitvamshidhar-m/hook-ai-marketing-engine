@@ -5,7 +5,7 @@ import { detectReferral } from "@/lib/referral";
 import { captureAttribution, getAttribution } from "@/lib/tracking";
 
 type User = { id: string; email: string };
-type Profile = { id: string; email: string; name: string; credits: number; role?: string; ref_code?: string };
+type Profile = { id: string; email: string; name: string; credits: number; role?: string; ref_code?: string; captured_email?: boolean };
 
 type AuthContextValue = {
   user: User | null;

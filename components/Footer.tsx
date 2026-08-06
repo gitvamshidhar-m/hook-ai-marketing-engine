@@ -28,6 +28,15 @@ export default function Footer() {
           <Link href="/analytics" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
             Analytics
           </Link>
+          <Link href="/terms" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Terms
+          </Link>
+          <Link href="/privacy" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Privacy
+          </Link>
+          <Link href="/cookies" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Cookies
+          </Link>
           <a
             href="https://github.com/gitvamshidhar-m/hook-ai-marketing-engine"
             target="_blank"

@@ -13,12 +13,13 @@ export default function AuthModal({
   onClose: () => void;
 }) {
   const { user, profile, login, signup, logout, refresh } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">(() => (user ? "login" : "signup"));
+  const [mode, setMode] = useState<"login" | "signup" | "reset">(() => (user ? "login" : "signup"));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [upgrade, setUpgrade] = useState<UpgradeState>("idle");
   const [referral, setReferral] = useState<{ code: string; url: string; referredCount: number; creditsEarned: number } | null>(null);
   const [refCopied, setRefCopied] = useState(false);
@@ -124,6 +125,18 @@ export default function AuthModal({
     setError("");
     setBusy(true);
     try {
+      if (mode === "reset") {
+        const res = await fetch("/api/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Could not send reset link.");
+        setResetSent(true);
+        setBusy(false);
+        return;
+      }
       if (mode === "signup") {
         const stored =
           typeof window !== "undefined"
@@ -239,6 +252,44 @@ export default function AuthModal({
               Sign out
             </button>
           </div>
+        ) : mode === "reset" ? (
+          <div className="mt-5">
+            {resetSent ? (
+              <div className="text-center">
+                <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Reset link sent</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  If an account exists for {email || "that email"}, we sent a password-reset link. Check your inbox.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={submit} className="space-y-3">
+                <p className="text-sm text-zinc-500">Enter your account email and we will send a reset link.</p>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:ring-indigo-900/40"
+                />
+                {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="bg-gradient-brand w-full rounded-xl py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
+                >
+                  {busy ? "Sending…" : "Send reset link"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="w-full text-center text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                >
+                  Back to sign in
+                </button>
+              </form>
+            )}
+          </div>
         ) : (
           <form onSubmit={submit} className="mt-5 space-y-3">
             {mode === "signup" && (
@@ -281,6 +332,15 @@ export default function AuthModal({
             >
               {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
             </button>
+            {mode === "login" && (
+              <button
+                type="button"
+                onClick={() => { setMode("reset"); setError(""); }}
+                className="w-full text-center text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+              >
+                Forgot your password?
+              </button>
+            )}
           </form>
         )}
       </div>

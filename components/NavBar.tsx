@@ -65,6 +65,14 @@ export default function NavBar() {
                 Admin
               </Link>
             )}
+            {user && (
+              <Link
+                href="/account"
+                className="rounded-lg px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+              >
+                Account
+              </Link>
+            )}
             {user ? (
               <button
                 onClick={() => setAuthOpen(true)}
