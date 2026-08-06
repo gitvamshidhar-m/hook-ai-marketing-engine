@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabaseConfigured } from "@/lib/supabase";
+import LeadCapture from "@/components/LeadCapture";
 
 type StatRow = {
   topic: string;
@@ -289,6 +290,13 @@ export default function AnalyticsPage() {
             )}
           </>
         )}
+
+        <LeadCapture
+          compact
+          source="analytics"
+          title="Want sharper CTR scores for your niche?"
+          subtitle="Drop your email and we'll send the angles your competitors are missing — free."
+        />
       </div>
     </main>
   );

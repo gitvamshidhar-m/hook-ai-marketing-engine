@@ -6,6 +6,7 @@ import type { Campaign } from "@/lib/account";
 import { listCampaigns, deleteCampaign, loadCampaign, duplicateCampaign } from "@/lib/account";
 import ResultView from "@/components/ResultView";
 import CampaignPlanView from "@/components/CampaignPlanView";
+import LeadCapture from "@/components/LeadCapture";
 import { exportCampaignsCSV, exportResultCSV, printResult } from "@/lib/export";
 import type { AnalyzeResult } from "@/lib/types";
 
@@ -264,6 +265,13 @@ export default function CampaignsPage() {
             <ResultView result={open} />
           </div>
         )}
+
+        <LeadCapture
+          compact
+          source="campaigns"
+          title="Get your best hook turned into a full campaign plan"
+          subtitle="Drop your email and we'll send a step-by-step plan for launching the top hook above."
+        />
       </div>
     </main>
   );
