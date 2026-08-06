@@ -28,6 +28,12 @@ export default function NavBar() {
           </Link>
           <span className="ml-auto flex items-center gap-1 text-sm">
             <Link
+              href="/tools"
+              className="rounded-lg px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+            >
+              Tools
+            </Link>
+            <Link
               href="/community"
               className="rounded-lg px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
             >

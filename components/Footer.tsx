@@ -12,7 +12,16 @@ export default function Footer() {
         <p className="text-xs text-zinc-500">
           © {year} Hook AI · The angle discovery engine for marketers
         </p>
-        <div className="flex items-center gap-4 text-xs text-zinc-500">
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500">
+          <Link href="/tools" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Free tools
+          </Link>
+          <Link href="/templates" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Templates
+          </Link>
+          <Link href="/blog" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Blog
+          </Link>
           <Link href="/community" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
             Community
           </Link>

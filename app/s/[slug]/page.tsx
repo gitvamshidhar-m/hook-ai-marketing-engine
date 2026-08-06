@@ -6,10 +6,36 @@ import CampaignPlanView from "@/components/CampaignPlanView";
 import ShareTracker from "@/components/ShareTracker";
 import LeadForm from "@/components/LeadForm";
 
-export const metadata: Metadata = {
-  title: "Shared campaign · Hook AI",
-  description: "A marketing campaign generated with Hook AI — hooks, angles, plan, and health score.",
-};
+const base = "https://hook-ai-marketing-engine.vercel.app";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const result = await getShare(slug);
+  const topic = result?.topic || "Shared campaign";
+  const desc = result
+    ? `${topic} — ${result.hooks.length} hooks${result.plan ? `, health ${result.plan.healthScore}/100 (${result.plan.healthGrade})` : ""}. Generated with Hook AI.`
+    : "A marketing campaign generated with Hook AI.";
+  const image = result ? `${base}/og/share/${slug}` : undefined;
+  return {
+    title: `${topic} · Hook AI`,
+    description: desc,
+    alternates: { canonical: `${base}/s/${slug}` },
+    openGraph: {
+      title: `${topic} · Hook AI`,
+      description: desc,
+      type: "website",
+      url: `${base}/s/${slug}`,
+      siteName: "Hook AI",
+      images: image ? [{ url: image, width: 1200, height: 630, alt: topic }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${topic} · Hook AI`,
+      description: desc,
+      ...(image ? { images: [image] } : {}),
+    },
+  };
+}
 
 export default async function SharePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -31,6 +57,19 @@ export default async function SharePage({ params }: { params: Promise<{ slug: st
           </div>
         ) : (
           <>
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{
+                __html: JSON.stringify({
+                  "@context": "https://schema.org",
+                  "@type": "CreativeWork",
+                  name: result.topic,
+                  description: `${result.topic} — ${result.hooks.length} hooks${result.plan ? `, health ${result.plan.healthScore}/100 (${result.plan.healthGrade})` : ""}.`,
+                  creator: { "@type": "Organization", name: "Hook AI" },
+                  url: `${base}/s/${slug}`,
+                }),
+              }}
+            />
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
                 <h1 className="text-3xl font-bold tracking-tight">{result.topic}</h1>
