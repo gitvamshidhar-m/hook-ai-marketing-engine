@@ -21,9 +21,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
   }
 
+  // Without a sender configured, don't mark anything as mailed — the send
+  // is only logged AFTER it succeeds so a key added later isn't blocked
+  // by 7-day dedupe for emails we never actually delivered.
+  if (!process.env.RESEND_API_KEY) {
+    return NextResponse.json({
+      ok: true,
+      summary: { nurture: 0, topup: 0, skippedNoKey: true },
+    });
+  }
+
   const supabase = await createServerSupabase();
 
-  const summary = { nurture: 0, topup: 0, skippedNoKey: !process.env.RESEND_API_KEY };
+  const summary = { nurture: 0, topup: 0, skippedNoKey: false };
 
   async function mailCandidates<T>(
     campaign: string,
@@ -37,18 +47,18 @@ export async function GET(req: NextRequest) {
     }
     let sent = 0;
     for (const row of rows as T[]) {
-      // Idempotent guard lives in the DB; skip rows we can't address.
-      const { data: fresh } = await supabase.rpc("log_email", {
-        p_email: (row as { email: string }).email,
-        p_campaign: campaign,
-      });
-      if (fresh !== true) continue; // already mailed within 7d
+      const email = (row as { email: string }).email;
       await sendEmail({
-        to: (row as { email: string }).email,
+        to: email,
         subject: campaign === CAMPAIGN_NURTURE ? "Your hooks are still here" : "Out of credits? Here's your fastest way back",
         text: makeText(row),
       });
-      sent += 1;
+      // Idempotent guard lives in the DB; skip rows we can't address.
+      const { data: logged } = await supabase.rpc("log_email", {
+        p_email: email,
+        p_campaign: campaign,
+      });
+      if (logged === true) sent += 1;
     }
     return sent;
   }
