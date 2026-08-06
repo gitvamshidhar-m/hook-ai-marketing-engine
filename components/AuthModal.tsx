@@ -125,8 +125,18 @@ export default function AuthModal({
     setBusy(true);
     try {
       if (mode === "signup") {
+        const stored =
+          typeof window !== "undefined"
+            ? (() => {
+                try {
+                  return window.localStorage.getItem("hookai-referred") || "";
+                } catch {
+                  return "";
+                }
+              })()
+            : "";
         const refParam =
-          typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("ref") || undefined : undefined;
+          typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("ref") || stored || undefined : undefined;
         await signup(email, password, name, refParam);
       } else {
         await login(email, password);

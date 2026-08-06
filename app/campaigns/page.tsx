@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Campaign } from "@/lib/account";
-import { listCampaigns, deleteCampaign, loadCampaign } from "@/lib/account";
+import { listCampaigns, deleteCampaign, loadCampaign, duplicateCampaign } from "@/lib/account";
 import ResultView from "@/components/ResultView";
+import CampaignPlanView from "@/components/CampaignPlanView";
 import { exportCampaignsCSV, exportResultCSV, printResult } from "@/lib/export";
 import type { AnalyzeResult } from "@/lib/types";
 
@@ -39,6 +40,27 @@ export default function CampaignsPage() {
     setCamps(listCampaigns());
     setNotice("Campaign deleted.");
     setTimeout(() => setNotice(""), 2000);
+  }
+
+  function copyLocally(c: Campaign) {
+    duplicateCampaign(c);
+    setCamps(listCampaigns());
+    setNotice("Campaign duplicated.");
+    setTimeout(() => setNotice(""), 2000);
+  }
+
+  async function copyCloud(p: CloudProject) {
+    const res = await fetch("/api/projects/duplicate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: p.id }),
+    });
+    const data = await res.json();
+    if (res.ok && data.project) {
+      setCloud((prev) => [data.project as CloudProject, ...prev]);
+      setNotice("Campaign duplicated.");
+      setTimeout(() => setNotice(""), 2000);
+    }
   }
 
   function openCampaign(id: string) {
@@ -146,6 +168,13 @@ export default function CampaignsPage() {
                       CSV
                     </button>
                     <button
+                      onClick={() => copyLocally(c)}
+                      className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      title="Duplicate this campaign"
+                    >
+                      Copy
+                    </button>
+                    <button
                       onClick={() => printResult(c.result)}
                       className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
                       title="Print"
@@ -204,6 +233,13 @@ export default function CampaignsPage() {
                         CSV
                       </button>
                       <button
+                        onClick={() => copyCloud(p)}
+                        className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        title="Duplicate this campaign"
+                      >
+                        Duplicate
+                      </button>
+                      <button
                         onClick={() => printResult(p.result)}
                         className="rounded-xl border border-zinc-300 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
                         title="Print"
@@ -220,6 +256,11 @@ export default function CampaignsPage() {
 
         {open && (
           <div className="mt-8">
+            {open.plan && (
+              <div className="mb-8">
+                <CampaignPlanView result={open} />
+              </div>
+            )}
             <ResultView result={open} />
           </div>
         )}

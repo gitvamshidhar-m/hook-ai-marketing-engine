@@ -12,8 +12,19 @@ type StatRow = {
   created_at: string;
 };
 
+type ShareStat = {
+  slug: string;
+  title: string;
+  views: number;
+  clicks: number;
+  leads: number;
+  created_at: string;
+  url: string;
+};
+
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<StatRow[]>([]);
+  const [shares, setShares] = useState<ShareStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -47,6 +58,13 @@ export default function AnalyticsPage() {
       }
     }
     load();
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/shares/stats", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setShares(Array.isArray(d.shares) ? d.shares : []))
+      .catch(() => {});
   }, []);
 
   const totalRuns = stats.length;
@@ -156,6 +174,56 @@ export default function AnalyticsPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {shares.length > 0 && (
+              <div className="card-elevated mt-8 overflow-x-auto rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="px-4 pt-4">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+                    Shared campaign pages
+                  </h2>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Views, clicks, and leads captured on your published /s/ links.
+                  </p>
+                </div>
+                <table className="mt-3 w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800">
+                      <th className="px-4 py-3">Title</th>
+                      <th className="px-4 py-3">Views</th>
+                      <th className="px-4 py-3">Clicks</th>
+                      <th className="px-4 py-3">Leads</th>
+                      <th className="px-4 py-3">Created</th>
+                      <th className="px-4 py-3">Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shares.map((s) => (
+                      <tr key={s.slug} className="border-b border-zinc-100 transition last:border-0 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950">
+                        <td className="max-w-[220px] truncate px-4 py-3 font-medium">{s.title}</td>
+                        <td className="px-4 py-3 font-semibold">{s.views}</td>
+                        <td className="px-4 py-3 font-semibold">{s.clicks}</td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${s.leads > 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800"}`}>
+                            {s.leads}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-zinc-500">{new Date(s.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          <a
+                            href={s.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400"
+                          >
+                            open
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
 

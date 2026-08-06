@@ -94,6 +94,20 @@ export function deleteCampaign(id: string) {
   writeCampaigns(readCampaigns().filter((c) => c.id !== id));
 }
 
+export function duplicateCampaign(c: Campaign): Campaign {
+  const now = new Date().toISOString();
+  const copy: Campaign = {
+    id: uid(),
+    title: `${c.title} (copy)`,
+    topic: c.topic,
+    result: JSON.parse(JSON.stringify(c.result)),
+    createdAt: now,
+    updatedAt: now,
+  };
+  writeCampaigns([copy, ...readCampaigns()]);
+  return copy;
+}
+
 export function campaignCount(): number {
   return readCampaigns().length;
 }

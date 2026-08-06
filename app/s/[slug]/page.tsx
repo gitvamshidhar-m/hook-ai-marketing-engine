@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getShare } from "@/lib/shares";
 import ResultView from "@/components/ResultView";
 import CampaignPlanView from "@/components/CampaignPlanView";
+import ShareTracker from "@/components/ShareTracker";
+import LeadForm from "@/components/LeadForm";
 
 export const metadata: Metadata = {
   title: "Shared campaign · Hook AI",
@@ -52,6 +54,12 @@ export default async function SharePage({ params }: { params: Promise<{ slug: st
             )}
 
             <ResultView result={result} />
+
+            <div className="mx-auto mt-10 max-w-xl">
+              <LeadForm slug={slug} topic={result.topic} />
+            </div>
+
+            <ShareTracker slug={slug} />
           </>
         )}
       </div>

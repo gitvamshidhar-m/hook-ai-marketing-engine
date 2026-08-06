@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { detectReferral } from "@/lib/referral";
 
 type User = { id: string; email: string };
 type Profile = { id: string; email: string; name: string; credits: number; role?: string; ref_code?: string };
@@ -34,6 +35,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    detectReferral();
   }, []);
 
   useEffect(() => {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { AnalyzeResult } from "@/lib/types";
 import { CHANNEL_LABELS } from "@/lib/types";
+import { exportPlanCSV, printCampaignPlanReport } from "@/lib/export";
 
 const CHANNEL_TINT: Record<string, string> = {
   ad: "#6366f1",
@@ -77,6 +78,18 @@ export default function CampaignPlanView({ result }: { result: AnalyzeResult }) 
             className="bg-gradient-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110 disabled:opacity-60"
           >
             {publish === "busy" ? "Publishing…" : publish === "done" ? "Link copied!" : "Publish campaign link"}
+          </button>
+          <button
+            onClick={() => exportPlanCSV(result)}
+            className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => printCampaignPlanReport(result)}
+            className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          >
+            Print report
           </button>
           {publish === "done" && shareUrl && (
             <code className="max-w-full truncate rounded-lg bg-zinc-100 px-3 py-1.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{shareUrl}</code>

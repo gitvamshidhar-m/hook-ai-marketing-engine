@@ -10,6 +10,7 @@ export default function CampaignPage() {
   const [goal, setGoal] = useState("");
   const [competitors, setCompetitors] = useState("");
   const [budget, setBudget] = useState(500);
+  const [premium, setPremium] = useState(false);
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -30,6 +31,7 @@ export default function CampaignPage() {
           competitorHooks: competitors,
           count: 3,
           budget,
+          premium,
         }),
       });
       const data = await res.json();
@@ -94,6 +96,28 @@ export default function CampaignPage() {
                 className={inputClass}
               />
             </div>
+            <div className="md:col-span-2">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-zinc-500">Model quality</label>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPremium(false)}
+                  className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${!premium ? "border-indigo-400 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-100 dark:border-indigo-600 dark:bg-indigo-950 dark:text-indigo-300" : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900"}`}
+                >
+                  Standard · 1 credit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPremium(true)}
+                  className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${premium ? "border-indigo-400 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-100 dark:border-indigo-600 dark:bg-indigo-950 dark:text-indigo-300" : "border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-900"}`}
+                >
+                  Premium · 3 credits
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-zinc-500">
+                Premium routes your brief through a stronger model for sharper hooks and a higher health score.
+              </p>
+            </div>
           </div>
 
           {error && <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">{error}</p>}
@@ -106,7 +130,7 @@ export default function CampaignPage() {
             >
               {busy ? "Generating your plan…" : "Generate full campaign plan"}
             </button>
-            <p className="text-xs text-zinc-500">Costs 1 credit per run.</p>
+            <p className="text-xs text-zinc-500">Costs {premium ? "3 credits (premium)" : "1 credit"} per run.</p>
           </div>
         </form>
 

@@ -10,6 +10,7 @@ const NVIDIA_KEY = process.env.NVIDIA_API_KEY || "";
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash-lite";
 const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+const GROQ_PREMIUM_MODEL = process.env.GROQ_PREMIUM_MODEL || "llama-3.3-70b-versatile";
 const NVIDIA_MODEL = process.env.NVIDIA_MODEL || "meta/llama-3.1-8b-instruct";
 
 export function hasAi() {
@@ -93,12 +94,12 @@ async function callGemini(prompt: string): Promise<string> {
   return data?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || "";
 }
 
-async function callGroq(prompt: string): Promise<string> {
+async function callGroq(prompt: string, model: string = GROQ_MODEL): Promise<string> {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${GROQ_KEY}` },
     body: JSON.stringify({
-      model: GROQ_MODEL,
+      model,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.95,
       max_tokens: 2000,
@@ -162,7 +163,11 @@ function humanize(t: string) {
   return map[id] || "Curiosity gap";
 }
 
-export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResult> {
+export async function generateAiResult(
+  input: AnalyzeInput,
+  opts?: { premium?: boolean }
+): Promise<AnalyzeResult> {
+  const premium = opts?.premium === true;
   const base = generateResult(input);
   const compList = Array.isArray(input.competitorHooks)
     ? input.competitorHooks
@@ -204,7 +209,11 @@ export async function generateAiResult(input: AnalyzeInput): Promise<AnalyzeResu
 
   const normInput = { ...input, competitorHooks: compList, voiceSamples: voiceList };
   const ran =
-    (GROQ_KEY && (await runWith((ch) => callGroq(buildPrompt({ ...normInput, count: input.count || 3 }, ch)), `Groq ${GROQ_MODEL}`))) ||
+    (GROQ_KEY &&
+      (await runWith(
+        (ch) => callGroq(buildPrompt({ ...normInput, count: input.count || 3 }, ch), premium ? GROQ_PREMIUM_MODEL : GROQ_MODEL),
+        `Groq ${premium ? GROQ_PREMIUM_MODEL : GROQ_MODEL}`
+      ))) ||
     (NVIDIA_KEY &&
       (await runWith((ch) => callNvidia(buildPrompt({ ...normInput, count: input.count || 3 }, ch)), `NVIDIA ${NVIDIA_MODEL}`))) ||
     (GEMINI_KEY && (await runWith((ch) => callGemini(buildPrompt({ ...normInput, count: input.count || 3 }, ch)), `Gemini ${GEMINI_MODEL}`)));
