@@ -51,3 +51,36 @@ Keep sharing your result cards to earn a credit for every signup.
 
 https://hook-ai-marketing-engine.vercel.app/`;
 }
+
+export function nurtureEmailText(topic?: string): string {
+  const topicLine = topic
+    ? `Last time you were here you searched for "${topic.slice(0, 80)}".`
+    : "You got a taste of it last time you were here.";
+  return `${topicLine}
+
+You haven't created an account yet, so your results are still waiting. Here's the thing: free members get 20 fresh runs every single day plus a bonus 5 when you verify your email — and every result card you share earns a credit on signups.
+
+Try the angle engine again in under 30 seconds:
+
+https://hook-ai-marketing-engine.vercel.app/
+
+No credit card. Your daily allowance resets each morning.
+
+— The Hook AI team`;
+}
+
+export function topupEmailText(): string {
+  return `Your Hook AI balance just hit zero.
+
+Good news: you clearly used it. The fastest way to get back to shipping hooks is one of these:
+
+1. Share a result card — every friend who signs up through your link earns you a credit.
+2. Top up with a Starter or Pro pack (they're a fraction of one hour of an agency's time).
+3. Wait for tomorrow's free refresh — your daily allowance resets every morning.
+
+Top up or track your credits here:
+
+https://hook-ai-marketing-engine.vercel.app/account
+
+— The Hook AI team`;
+}

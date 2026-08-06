@@ -13,6 +13,7 @@ import { bonusRunsToday } from "@/lib/referral";
 import { competitorHooksFromCSV, readFileAsText } from "@/lib/csv";
 import { track, emailBonusRunsToday, isEmailBonusClaimed } from "@/lib/tracking";
 import EmailCapture from "./EmailCapture";
+import Link from "next/link";
 
 const CHANNEL_ORDER: Channel[] = ["ad", "email", "youtube", "blog"];
 const FREE_DAILY = 20;
@@ -43,6 +44,7 @@ export default function HookTool() {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [progressStep, setProgressStep] = useState(0);
   const [emailBonus, setEmailBonus] = useState(() => emailBonusRunsToday());
+  const [limitHit, setLimitHit] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -100,9 +102,12 @@ export default function HookTool() {
   async function run(variationSeed: number, avoid: string[]) {
     if (!topic.trim()) return setError("Enter a topic to start.");
     if (variationSeed === 0 && usedToday() >= FREE_DAILY + bonusRunsToday() + emailBonus) {
+      setLimitHit(true);
+      track("run_limit_hit", { topic: topic.trim().slice(0, 80) });
       setError(`You hit the free limit (${FREE_DAILY} runs/day). Share results or grab the +5 email bonus to earn more, try harder variations, or come back tomorrow.`);
       return;
     }
+    setLimitHit(false);
     setLoading(true);
     setError("");
     try {
@@ -149,6 +154,7 @@ export default function HookTool() {
     setResult(null);
     setVariation(0);
     setError("");
+    setLimitHit(false);
   }
 
   function tryHarder() {
@@ -337,6 +343,59 @@ export default function HookTool() {
           )}
         </div>
       </section>
+
+      {limitHit && !result && (
+        <section className="card-elevated mt-6 rounded-2xl border border-indigo-200 bg-gradient-soft p-6 dark:border-indigo-900 dark:bg-indigo-950/30 sm:p-8">
+          <h2 className="text-lg font-bold">You&apos;ve hit the free limit for today</h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            {user
+              ? "Your daily allowance is used up. Top up credits to keep generating without waiting."
+              : "Your daily allowance is used up — but there are two fast ways to keep going."}
+          </p>
+
+          {!user && (
+            <div className="mt-5">
+              <p className="text-sm font-semibold">
+                1. Unlock +5 more runs with your email{" "}
+                <span className="font-normal text-zinc-500">(one-time bonus for today)</span>
+              </p>
+              <div className="mt-2 max-w-md">
+                <EmailCapture
+                  topic={topic}
+                  onClaimed={(b) => {
+                    setEmailBonus((prev) => Math.max(prev, b));
+                    setLimitHit(false);
+                    setError("");
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="mt-5">
+            <p className="text-sm font-semibold">{user ? "1. " : "2. "}Get more runs, on demand</p>
+            <div className="mt-2 flex flex-wrap gap-3">
+              <Link
+                href="/pricing"
+                className="bg-gradient-brand rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110"
+              >
+                View pricing
+              </Link>
+              <Link
+                href="/account"
+                className="rounded-xl border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {user ? "Top up credits" : "Create a free account"}
+              </Link>
+            </div>
+          </div>
+
+          <p className="mt-5 text-xs text-zinc-400">
+            Tip: “trying harder” variations never count against your daily total, and every result card you share
+            earns a credit on signups. The free allowance resets every morning.
+          </p>
+        </section>
+      )}
 
       {loading && !result && (
         <div className="mt-8" aria-hidden>

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { templates, getTemplate } from "@/lib/seo/templates";
-import { getTool } from "@/lib/seo/tools";
+import { templates, getTemplate, templateFaq } from "@/lib/seo/templates";
+import { getTool, tools } from "@/lib/seo/tools";
 
 export const dynamicParams = false;
 
@@ -35,17 +35,30 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
   const t = getTemplate(slug);
   if (!t) notFound();
   const tool = getTool(t.toolSlug);
+  const faq = templateFaq(t);
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: t.title,
-    description: t.intro,
-    itemListElement: t.hooks.map((h, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      name: h,
-    })),
+    "@graph": [
+      {
+        "@type": "ItemList",
+        name: t.title,
+        description: t.intro,
+        itemListElement: t.hooks.map((h, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: h,
+        })),
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: faq.map((f) => ({
+          "@type": "Question",
+          name: f.question,
+          acceptedAnswer: { "@type": "Answer", text: f.answer },
+        })),
+      },
+    ],
   };
 
   return (
@@ -116,6 +129,38 @@ export default async function TemplatePage({ params }: { params: Promise<{ slug:
                   {tm.niche}
                 </Link>
               ))}
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Related tools</h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {tools.slice(0, 4).map((tm) => (
+              <Link
+                key={tm.slug}
+                href={`/tools/${tm.slug}`}
+                className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {tm.h1}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <h2 className="text-lg font-bold">Frequently asked questions</h2>
+          <div className="mt-4 space-y-3">
+            {faq.map((f) => (
+              <details
+                key={f.question}
+                className="group rounded-2xl border border-zinc-200 bg-white p-4 open:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:open:bg-zinc-950"
+              >
+                <summary className="cursor-pointer text-sm font-semibold marker:content-none">
+                  {f.question}
+                </summary>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{f.answer}</p>
+              </details>
+            ))}
           </div>
         </section>
       </div>

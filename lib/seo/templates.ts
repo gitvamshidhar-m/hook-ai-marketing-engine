@@ -507,3 +507,28 @@ export const templates: Template[] = [
 export function getTemplate(slug: string): Template | undefined {
   return templates.find((t) => t.slug === slug);
 }
+
+export type FaqItem = { question: string; answer: string };
+
+// Programmatic FAQ so every template page gets unique, niche-specific
+// content plus FAQPage schema (drives rich results in Google).
+export function templateFaq(t: Template): FaqItem[] {
+  return [
+    {
+      question: `What are the best ${t.niche} marketing hooks?`,
+      answer: `The best ${t.niche} marketing hooks lead with a specific outcome or audience instead of a generic announcement. Examples from our ${t.title} list: "${t.hooks[0]}" and "${t.hooks[1]}". Both name the result the reader wants, which is what earns the click and the reply.`,
+    },
+    {
+      question: `How do I write a hook for a ${t.niche} brand?`,
+      answer: `Start with the audience plus the outcome: who you help and what changes for them. Pick one concrete benefit, cut every word that doesn't serve it, and test the result with a CTR-scored generator. We have a free one built into this site that returns scored options for your exact product.`,
+    },
+    {
+      question: `What makes a ${t.niche} ad headline convert?`,
+      answer: `Three things: specificity (real numbers and timeframes), a psychological trigger (curiosity, loss aversion, or transformation), and the right channel. A headline that works as an ad may flop as an email subject, so match the format. Our ${t.niche} examples above are grouped by where they're meant to run.`,
+    },
+    {
+      question: `Where can I get more ${t.niche} hook ideas for free?`,
+      answer: `Use the free ${t.niche} generator on this site — type your topic once and it returns several scored hooks you can copy. You also get ${t.hooks.length} ready-to-adapt examples on this page and a fresh daily allowance to test as many angles as you need.`,
+    },
+  ];
+}

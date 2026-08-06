@@ -6,5 +6,8 @@
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
+  ],
+  "crons": [
+    { "path": "/api/cron/emails", "schedule": "0 9 * * *" }
   ]
 }

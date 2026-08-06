@@ -38,13 +38,25 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.metaDescription,
-    datePublished: post.date,
-    url: `https://hook-ai-marketing-engine.vercel.app/blog/${post.slug}`,
-    author: { "@type": "Organization", name: "Hook AI" },
-    publisher: { "@type": "Organization", name: "Hook AI" },
+    "@graph": [
+      {
+        "@type": "BlogPosting",
+        headline: post.title,
+        description: post.metaDescription,
+        datePublished: post.date,
+        url: `https://hook-ai-marketing-engine.vercel.app/blog/${post.slug}`,
+        author: { "@type": "Organization", name: "Hook AI" },
+        publisher: { "@type": "Organization", name: "Hook AI" },
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: post.faq.map((f) => ({
+          "@type": "Question",
+          name: f.question,
+          acceptedAnswer: { "@type": "Answer", text: f.answer },
+        })),
+      },
+    ],
   };
 
   return (
@@ -99,6 +111,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </Link>
           </div>
         </div>
+
+        <section className="mt-10">
+          <h2 className="text-lg font-bold">Frequently asked questions</h2>
+          <div className="mt-4 space-y-3">
+            {post.faq.map((f) => (
+              <details
+                key={f.question}
+                className="group rounded-2xl border border-zinc-200 bg-white p-4 open:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:open:bg-zinc-950"
+              >
+                <summary className="cursor-pointer text-sm font-semibold marker:content-none">{f.question}</summary>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{f.answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );
