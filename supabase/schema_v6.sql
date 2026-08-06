@@ -22,7 +22,7 @@ begin
     'signups',   (select count(*)::int from public.profiles),
     'runs',      (select count(*)::int from public.events where name = 'tool_used'),
     'shares',    (select count(*)::int from public.events where name = 'share_created'),
-    'referralSignups', (select count(*)::int from public.events where name = 'signup' and props->>'ref' is not null),
+    'referralSignups', (select count(*)::int from public.referrals where status = 'paid'),
     'challenges',(select count(*)::int from public.events where name = 'challenge_scored'),
     'emailSends',(select count(*)::int from public.email_logs),
     'topups',    (select count(*)::int from public.events where name = 'topup'),
