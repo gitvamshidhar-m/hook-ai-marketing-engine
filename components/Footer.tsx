@@ -61,9 +61,6 @@ export default function Footer() {
             GitHub
           </a>
         </div>
-        <p className="text-xs text-zinc-400">
-          Built with Next.js · Supabase · Stripe · Groq
-        </p>
       </div>
     </footer>
   );
