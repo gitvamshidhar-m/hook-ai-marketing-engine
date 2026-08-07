@@ -12,6 +12,19 @@ Built as a self-shipped, end-to-end product — not a demo — with real users, 
 
 ---
 
+## For digital-marketing recruiters
+
+This is also a **live growth-marketing system**: SEO content (32 posts + niche tool pages + hub +
+trends), a hero **A/B test** with real CTR and significance, an **exit-intent lead capture**, and
+**5 automated email flows** — all measured on a public dashboard.
+
+- Read the pitch: [`docs/portfolio/CASE-STUDY.md`](docs/portfolio/CASE-STUDY.md)
+- Resume bullets: [`docs/portfolio/RESUME-BULLETS.md`](docs/portfolio/RESUME-BULLETS.md)
+- First-user playbook: [`docs/portfolio/USER-ACQUISITION-PLAYBOOK.md`](docs/portfolio/USER-ACQUISITION-PLAYBOOK.md)
+- Live proof: **[/growth](https://hook-ai-marketing-engine.vercel.app/growth)** (funnel + A/B) and **[/analytics](https://hook-ai-marketing-engine.vercel.app/analytics)**
+
+---
+
 ## Features
 
 ### Core engine
