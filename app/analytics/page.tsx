@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabaseConfigured } from "@/lib/supabase";
 import LeadCapture from "@/components/LeadCapture";
+import GrowthFunnel from "@/components/GrowthFunnel";
 
 type StatRow = {
   topic: string;
@@ -177,6 +178,8 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             )}
+
+            <GrowthFunnel />
 
             {shares.length > 0 && (
               <div className="card-elevated mt-8 overflow-x-auto rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">

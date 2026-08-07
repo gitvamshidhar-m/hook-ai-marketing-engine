@@ -207,7 +207,21 @@ export default function HookTool() {
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium">Topic / product / niche</span>
+            <span className="mb-1.5 flex items-center justify-between text-sm font-medium">
+              Topic / product / niche
+              <button
+                type="button"
+                onClick={() => {
+                  setTopic("a meal-prep app for busy parents");
+                  setAudience("time-crunched parents, 25-40");
+                  setGoal("drive signups to a free 5-meal plan");
+                }}
+                className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-600 transition hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
+                title="Pre-fill a worked example so you can run it instantly"
+              >
+                See an example
+              </button>
+            </span>
             <input
               value={topic}
               onChange={(e) => setTopic(e.target.value)}

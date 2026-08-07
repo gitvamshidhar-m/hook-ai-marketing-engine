@@ -107,7 +107,32 @@ as $$
   limit limit_n;
 $$;
 
+-- Weekly digest for accounts active in the last 7 days (return-visit nudge).
+create or replace function public.digest_email_candidates(limit_n int default 200)
+returns table(email text, hooks bigint, projects bigint)
+language sql
+security definer
+set search_path = public
+as $$
+  select p.email,
+    (select count(*) from public.events e where e.name='tool_used' and e.user_id = p.id
+       and e.created_at > now() - interval '7 days') as hooks,
+    (select count(*) from public.projects pr where pr.user_id = p.id
+       and pr.created_at > now() - interval '30 days') as projects
+  from public.profiles p
+  where p.email is not null
+    and p.created_at > now() - interval '30 days'
+    and (select count(*) from public.events e where e.name='tool_used' and e.user_id = p.id
+           and e.created_at > now() - interval '7 days') > 0
+    and not exists (select 1 from public.email_logs el
+        where el.email = p.email and el.campaign = 'digest'
+          and el.sent_at > now() - interval '7 days')
+  order by hooks desc
+  limit limit_n;
+$$;
+
 grant execute on function public.growth_overview() to anon, authenticated;
 grant execute on function public.ab_stats() to anon, authenticated;
 grant execute on function public.reengage_email_candidates(int) to anon, authenticated;
 grant execute on function public.lowbalance_email_candidates(int) to anon, authenticated;
+grant execute on function public.digest_email_candidates(int) to anon, authenticated;

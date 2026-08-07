@@ -7,6 +7,7 @@ import {
   topupEmailText,
   reengageEmailText,
   lowBalanceEmailText,
+  digestEmailText,
 } from "@/lib/email";
 
 export const runtime = "nodejs";
@@ -17,12 +18,14 @@ const CAMPAIGN_NURTURE = "nurture";
 const CAMPAIGN_TOPUP = "topup";
 const CAMPAIGN_REENGAGE = "reengage";
 const CAMPAIGN_LOWBALANCE = "lowbalance";
+const CAMPAIGN_DIGEST = "digest";
 
 const SUBJECTS: Record<string, string> = {
   [CAMPAIGN_NURTURE]: "Your hooks are still here",
   [CAMPAIGN_TOPUP]: "Out of credits? Here's your fastest way back",
   [CAMPAIGN_REENGAGE]: "Your best results are still waiting",
   [CAMPAIGN_LOWBALANCE]: "You're a few runs from hitting zero",
+  [CAMPAIGN_DIGEST]: "Your Hook AI week in review",
 };
 
 export async function GET(req: NextRequest) {
@@ -50,6 +53,7 @@ export async function GET(req: NextRequest) {
         topup: 0,
         reengage: 0,
         lowbalance: 0,
+        digest: 0,
         skippedNoKey: true,
       },
     });
@@ -62,6 +66,7 @@ export async function GET(req: NextRequest) {
     topup: 0,
     reengage: 0,
     lowbalance: 0,
+    digest: 0,
     skippedNoKey: false,
   };
 
@@ -117,6 +122,12 @@ export async function GET(req: NextRequest) {
     CAMPAIGN_LOWBALANCE,
     "lowbalance_email_candidates",
     (row) => lowBalanceEmailText(row.credits)
+  );
+
+  summary.digest = await mailCandidates<{ email: string; hooks: number; projects: number }>(
+    CAMPAIGN_DIGEST,
+    "digest_email_candidates",
+    (row) => digestEmailText(Number(row.hooks) || 0, Number(row.projects) || 0)
   );
 
   return NextResponse.json({ ok: true, summary });

@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/tools`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/templates`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${base}/blog`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${base}/learn`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${base}/tools/job-snippet-generator`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/tools/ad-preview`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${base}/community`, changeFrequency: "daily", priority: 0.6 },

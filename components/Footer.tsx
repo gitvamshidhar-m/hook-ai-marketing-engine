@@ -22,6 +22,9 @@ export default function Footer() {
           <Link href="/blog" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
             Blog
           </Link>
+          <Link href="/learn" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
+            Learn
+          </Link>
           <Link href="/community" className="transition hover:text-zinc-800 dark:hover:text-zinc-200">
             Community
           </Link>

@@ -11,6 +11,16 @@ export default function NavBar() {
 
   return (
     <>
+      <div className="bg-gradient-brand text-white">
+        <Link
+          href="/growth"
+          className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 py-1.5 text-center text-xs font-medium transition hover:brightness-110"
+        >
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" aria-hidden />
+          We&apos;re running a live A/B test on our homepage headline — watch real results on the public
+          Growth dashboard
+        </Link>
+      </div>
       <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-white/75 backdrop-blur-xl dark:border-zinc-800/70 dark:bg-zinc-950/75">
         <nav className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
           <Link href="/" className="group flex items-center gap-2.5">
