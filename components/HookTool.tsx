@@ -38,6 +38,21 @@ export default function HookTool() {
   const [result, setResult] = useState<AnalyzeResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [tryingHarder, setTryingHarder] = useState(false);
+
+  // Deep-link prefill: /?topic=<idea> (used by the Chrome extension and share links).
+  // Delayed so it runs after hydration and never triggers a render mismatch.
+  useEffect(() => {
+    let t = "";
+    try {
+      t = new URLSearchParams(window.location.search).get("topic")?.trim() || "";
+    } catch {
+      /* ignore */
+    }
+    if (t) {
+      const id = setTimeout(() => setTopic(t.slice(0, 120)), 0);
+      return () => clearTimeout(id);
+    }
+  }, []);
   const [error, setError] = useState("");
   const [variation, setVariation] = useState(0);
   const [rerunsLeft, setRerunsLeft] = useState<number | null>(null);

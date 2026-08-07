@@ -68,6 +68,12 @@ export default function NavBar() {
               Challenge
             </Link>
             <Link
+              href="/trends"
+              className="rounded-lg px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+            >
+              Trends
+            </Link>
+            <Link
               href="/blog"
               className="rounded-lg px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
             >

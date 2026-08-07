@@ -155,12 +155,12 @@ https://hook-ai-marketing-engine.vercel.app/account
 — The Hook AI team`;
 }
 
-export function digestEmailText(hooks: number, projects: number): string {
+export function digestEmailText(hooks: number, projects: number, featuredHook?: string): string {
   return `Here's your Hook AI week in review — ${
     hooks > 0 ? `you generated ${hooks} fresh hooks` : "a quiet week so far"
   }${projects > 0 ? ` and saved ${projects} campaign${projects === 1 ? "" : "s"}` : ""}.
 
-Your saved campaigns, templates, and credits are waiting right where you left them:
+${featuredHook ? `HOOK OF THE DAY\n\n  "${featuredHook}"\n\n` : ""}Your saved campaigns, templates, and credits are waiting right where you left them:
 
 https://hook-ai-marketing-engine.vercel.app/
 

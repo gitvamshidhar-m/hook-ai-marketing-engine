@@ -7,7 +7,7 @@ import { listCampaigns, deleteCampaign, loadCampaign, duplicateCampaign } from "
 import ResultView from "@/components/ResultView";
 import CampaignPlanView from "@/components/CampaignPlanView";
 import LeadCapture from "@/components/LeadCapture";
-import { exportCampaignsCSV, exportResultCSV, printResult } from "@/lib/export";
+import { exportCampaignsCSV, exportResultCSV, printResult, exportHookPack, printHookPack } from "@/lib/export";
 import type { AnalyzeResult } from "@/lib/types";
 
 type CloudProject = {
@@ -89,6 +89,18 @@ export default function CampaignsPage() {
           <div className="flex items-center gap-2">
             {camps.length > 0 && (
               <>
+                <button
+                  onClick={() => exportHookPack(camps)}
+                  className="bg-gradient-brand rounded-xl px-3.5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110"
+                >
+                  Copy Hook Pack
+                </button>
+                <button
+                  onClick={() => printHookPack(camps)}
+                  className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                >
+                  Print Hook Pack
+                </button>
                 <button
                   onClick={() => exportCampaignsCSV(camps)}
                   className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"

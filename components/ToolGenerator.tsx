@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Channel } from "@/lib/types";
+import { LANGUAGES } from "@/lib/types";
 
 type HookRow = {
   id: string;
@@ -16,6 +17,7 @@ export default function ToolGenerator({ channel, channelLabel }: { channel: Chan
   const [audience, setAudience] = useState("");
   const [goal, setGoal] = useState("");
   const [competitors, setCompetitors] = useState("");
+  const [language, setLanguage] = useState("en");
   const [rows, setRows] = useState<HookRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -35,6 +37,7 @@ export default function ToolGenerator({ channel, channelLabel }: { channel: Chan
           goal: goal || undefined,
           competitorHooks: competitors || undefined,
           channel,
+          language: language === "en" ? undefined : language,
           count: 3,
         }),
       });
@@ -79,6 +82,20 @@ export default function ToolGenerator({ channel, channelLabel }: { channel: Chan
           rows={2}
           className={inputClass}
         />
+        <label className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
+          <span>Language</span>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </label>
         {error && <p className="text-sm text-rose-600 dark:text-rose-400">{error}</p>}
         <button
           type="submit"

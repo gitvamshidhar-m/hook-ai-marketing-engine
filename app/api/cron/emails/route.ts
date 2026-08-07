@@ -61,6 +61,16 @@ export async function GET(req: NextRequest) {
 
   const supabase = await createServerSupabase();
 
+  // Hook of the day: the current highest-scoring community hook, shared in the digest.
+  let hookOfTheDay = "";
+  const { data: topHook } = await supabase
+    .from("community_hooks")
+    .select("hook")
+    .order("score", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (topHook?.hook) hookOfTheDay = String(topHook.hook);
+
   const summary = {
     nurture: 0,
     topup: 0,
@@ -127,7 +137,7 @@ export async function GET(req: NextRequest) {
   summary.digest = await mailCandidates<{ email: string; hooks: number; projects: number }>(
     CAMPAIGN_DIGEST,
     "digest_email_candidates",
-    (row) => digestEmailText(Number(row.hooks) || 0, Number(row.projects) || 0)
+    (row) => digestEmailText(Number(row.hooks) || 0, Number(row.projects) || 0, hookOfTheDay)
   );
 
   return NextResponse.json({ ok: true, summary });
