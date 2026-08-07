@@ -103,6 +103,12 @@ export default function NavBar() {
             >
               Campaign Studio
             </Link>
+            <Link
+              href="/about"
+              className="rounded-lg px-3 py-1.5 font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950"
+            >
+              About
+            </Link>
             {profile?.role === "admin" && (
               <Link
                 href="/admin"
