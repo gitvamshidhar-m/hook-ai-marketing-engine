@@ -64,6 +64,12 @@ export default function NavBar() {
               Blog
             </Link>
             <Link
+              href="/seo"
+              className="rounded-lg px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+            >
+              SEO
+            </Link>
+            <Link
               href="/pricing"
               className="rounded-lg px-3 py-1.5 text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
             >
