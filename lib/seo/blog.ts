@@ -722,3 +722,48 @@ export const blogPosts: BlogPost[] = [
 export function getBlogPost(slug: string): BlogPost | undefined {
   return blogPosts.find((p) => p.slug === slug);
 }
+
+// Maps each blog post to the single most-relevant free generator, so the
+// "Put this into action" CTA and tool-page cross-links stay topical (SEO silos).
+export const postToolSlug: Record<string, string> = {
+  "job-ad-hook-examples-that-get-more-applications": "ad-hook-generator",
+  "best-ai-tools-for-recruiters-2026": "ad-hook-generator",
+  "how-to-rank-job-posting-in-google": "ad-hook-generator",
+  "psychology-of-high-converting-headlines": "ad-hook-generator",
+  "how-to-write-ad-headlines-that-get-clicks": "ad-hook-generator",
+  "how-to-write-email-subject-lines-that-get-opened": "email-subject-line-generator",
+  "youtube-titles-that-rank-and-get-clicked": "youtube-title-generator",
+  "blog-h1-examples-that-rank-in-google": "blog-h1-generator",
+  "why-people-click-the-psychology-of-ctr": "ad-hook-generator",
+  "ab-testing-hooks-without-wasting-budget": "ad-hook-generator",
+  "recruitment-marketing-hooks-that-get-replies": "ad-hook-generator",
+  "real-estate-hooks-that-stop-the-scroll": "real-estate-hook-generator",
+  "saas-marketing-angles-that-turn-trial-signups": "saas-marketing-hooks-generator",
+  "fitness-coach-hooks-that-sell-transformation": "fitness-coach-hook-generator",
+  "course-launch-email-sequence-hooks": "email-subject-line-generator",
+  "ecommerce-hooks-product-ads-and-abandoned-carts": "ad-hook-generator",
+  "home-services-hooks-for-local-marketing": "local-seo-hook-generator",
+  "youtube-title-psychology-for-creators": "youtube-title-generator",
+  "landing-page-h1-and-subhead-hooks": "blog-h1-generator",
+  "b2b-sales-outreach-hooks-that-get-replies": "email-subject-line-generator",
+  "insurance-compliant-marketing-hooks": "insurance-marketing-hook-generator",
+  "local-seo-hooks-for-gbp-and-google-maps": "local-seo-hook-generator",
+  "coaching-hooks-that-sell-the-transformation": "career-coaching-hook-generator",
+  "newsletter-growth-hooks-that-build-subscribers": "email-subject-line-generator",
+  "mobile-app-store-title-and-push-hooks": "ad-hook-generator",
+  "finance-and-fintech-hooks-that-build-trust": "ad-hook-generator",
+  "wedding-and-event-marketing-hooks": "wedding-and-event-hook-generator",
+  "health-and-wellness-marketing-hooks": "ad-hook-generator",
+  "pet-care-marketing-hooks": "pet-care-hook-generator",
+  "accounting-marketing-hooks-for-tax-season": "accounting-hook-generator",
+  "photography-hooks-that-book-the-shoot": "photography-hook-generator",
+  "career-coaching-hooks-that-get-the-interview": "career-coaching-hook-generator",
+};
+
+export function toolForPost(slug: string): string {
+  return postToolSlug[slug] || "ad-hook-generator";
+}
+
+export function postsForTool(toolSlug: string): BlogPost[] {
+  return blogPosts.filter((p) => postToolSlug[p.slug] === toolSlug).slice(0, 3);
+}

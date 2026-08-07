@@ -24,6 +24,27 @@ function fmt(n: number | undefined | null): string {
   return (n || 0).toLocaleString("en-IN");
 }
 
+// Two-proportion z-test on CTA clicks vs views. Returns p-value (two-sided).
+function abPValue(a: AbRow, b: AbRow): number | null {
+  const p1 = a.clicks / a.views;
+  const p2 = b.clicks / b.views;
+  const p = (a.clicks + b.clicks) / (a.views + b.views);
+  const se = Math.sqrt(p * (1 - p) * (1 / a.views + 1 / b.views));
+  if (!se) return null;
+  const z = Math.abs(p1 - p2) / se;
+  return 2 * (1 - normalCdf(z));
+}
+
+function normalCdf(z: number): number {
+  // Abramowitz & Stegun approximation, accurate to ~1e-3.
+  const t = 1 / (1 + 0.2316419 * z);
+  const d = 0.3989422804014327 * Math.exp((-z * z) / 2);
+  return 1 - d * t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+}
+
+const MIN_VIEWS_PER_VARIANT = 200;
+const MIN_ABS_DIFF = 0.01;
+
 export default function GrowthPage() {
   const [data, setData] = useState<GrowthData | null>(null);
   const [error, setError] = useState("");
@@ -135,6 +156,46 @@ export default function GrowthPage() {
               </p>
               <div className="mt-4 space-y-3">
                 {ab.length === 0 && <p className="text-sm text-zinc-400">No test data yet — check back after traffic.</p>}
+                {(() => {
+                  const a = ab.find((r) => r.variant === "A");
+                  const b = ab.find((r) => r.variant === "B");
+                  if (!a || !b || a.views < MIN_VIEWS_PER_VARIANT || b.views < MIN_VIEWS_PER_VARIANT) {
+                    const minViews = Math.min(a?.views || 0, b?.views || 0);
+                    return minViews > 0 ? (
+                      <p className="mb-4 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                        Collecting data… {minViews}/{MIN_VIEWS_PER_VARIANT} minimum views per variant reached.
+                      </p>
+                    ) : null;
+                  }
+                  const winner = a.ctr >= b.ctr ? a : b;
+                  const loser = winner === a ? b : a;
+                  const p = abPValue(a, b);
+                  const declared = p !== null && p < 0.05 && winner.ctr - loser.ctr > MIN_ABS_DIFF;
+                  return (
+                    <div
+                      className={`mb-4 rounded-xl border px-3 py-2 text-xs ${
+                        declared
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300"
+                      }`}
+                    >
+                      {declared ? (
+                        <>
+                          <strong>Winner declared: Variant {winner.variant}</strong> — beats Variant{" "}
+                          {loser.variant} at {winner.ctr.toFixed(1)}% vs {loser.ctr.toFixed(1)}% CTR
+                          {p !== null ? ` (p=${p.toFixed(3)})` : ""}. To lock it in, redeploy with{" "}
+                          <code className="rounded bg-white/60 px-1 dark:bg-black/30">HERO_VARIANT={winner.variant}</code>
+                          .
+                        </>
+                      ) : (
+                        <>
+                          <strong>Collecting data…</strong> No significant winner yet: Variant A {a.ctr.toFixed(1)}% vs
+                          Variant B {b.ctr.toFixed(1)}% CTR{p !== null ? ` (p=${p.toFixed(2)})` : ""}. Need p &lt; 0.05 to declare.
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
                 {ab.map((r, i) => {
                   const other = ab[1 - i];
                   const anyData = ab.some((x) => x.views > 0);

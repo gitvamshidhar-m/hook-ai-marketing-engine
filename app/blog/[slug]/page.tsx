@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { blogPosts, getBlogPost } from "@/lib/seo/blog";
-import { tools } from "@/lib/seo/tools";
+import { blogPosts, getBlogPost, toolForPost } from "@/lib/seo/blog";
+import { getTool } from "@/lib/seo/tools";
 
 export const dynamicParams = false;
 
@@ -94,15 +94,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             Try the free generator referenced in this post — scored by predicted CTR.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
-            {tools.map((t) => (
-              <Link
-                key={t.slug}
-                href={`/tools/${t.slug}`}
-                className="bg-gradient-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110"
-              >
-                {t.h1}
-              </Link>
-            ))}
+            {(() => {
+              const t = getTool(toolForPost(post.slug));
+              return t ? (
+                <Link
+                  key={t.slug}
+                  href={`/tools/${t.slug}`}
+                  className="bg-gradient-brand rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:brightness-110"
+                >
+                  {t.h1}
+                </Link>
+              ) : null;
+            })()}
             <Link
               href="/tools/job-snippet-generator"
               className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"

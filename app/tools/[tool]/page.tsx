@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { tools, getTool } from "@/lib/seo/tools";
 import { templates } from "@/lib/seo/templates";
+import { postsForTool } from "@/lib/seo/blog";
 import ToolGenerator from "@/components/ToolGenerator";
 import { CHANNEL_LABELS } from "@/lib/types";
 
@@ -54,6 +55,20 @@ export default async function ToolPage({ params }: { params: Promise<{ tool: str
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: t.faq.map((f) => ({
+                "@type": "Question",
+                name: f.q,
+                acceptedAnswer: { "@type": "Answer", text: f.a },
+              })),
+            }),
+          }}
         />
         <nav className="mb-6 text-xs text-zinc-500">
           <Link href="/" className="hover:underline">Home</Link>
@@ -107,6 +122,24 @@ export default async function ToolPage({ params }: { params: Promise<{ tool: str
             </div>
           </section>
         )}
+
+        {(() => { const related = postsForTool(t.slug); return related.length > 0 ? (
+          <section className="mt-8">
+            <h2 className="text-lg font-bold">Related guides</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {related.map((p) => (
+                <Link
+                  key={p.slug}
+                  href={`/blog/${p.slug}`}
+                  className="card-elevated rounded-2xl border border-zinc-200 bg-white p-4 transition hover:border-indigo-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-indigo-800"
+                >
+                  <p className="font-semibold leading-snug">{p.title}</p>
+                  <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{p.excerpt}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null; })()}
 
         <section className="mt-8">
           <h2 className="text-lg font-bold">Frequently asked questions</h2>

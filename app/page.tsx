@@ -1,5 +1,6 @@
 import HookTool from "@/components/HookTool";
 import HeroAb from "@/components/HeroAb";
+import ExitIntentPopup from "@/components/ExitIntentPopup";
 
 export const revalidate = 300;
 
@@ -147,6 +148,7 @@ export default async function Home() {
   const social = await fetchSocialProof();
   return (
     <main className="flex-1">
+      <ExitIntentPopup />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-zinc-200 dark:border-zinc-800">
         <div className="bg-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(70%_60%_at_50%_0%,black,transparent)]" />
